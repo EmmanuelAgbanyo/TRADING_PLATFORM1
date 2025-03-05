@@ -1,0 +1,109 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #e6f2e6; /* Light green background inspired by GSE */
+    margin: 0;
+    padding: 0;
+    color: #003399; /* Dark blue text inspired by YIN and GSE */
+}
+
+header {
+    background-color: #006633; /* Green from GSE logo */
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    color: #fff;
+    margin: 0;
+    font-size: 24px;
+}
+
+.logo {
+    width: 150px;
+    height: 50px;
+    object-fit: contain; /* Ensures logos scale properly */
+}
+
+.left {
+    margin-right: auto; /* Pushes YIN logo to the left */
+}
+
+.right {
+    margin-left: auto; /* Pushes GSE logo to the right */
+}
+
+main {
+    padding: 20px;
+}
+
+section {
+    margin-bottom: 20px;
+}
+
+#search input {
+    width: 100%;
+    max-width: 400px;
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: #006633; /* Green from GSE */
+    color: #fff;
+}
+
+td input[type="number"] {
+    width: 60px;
+    padding: 5px;
+}
+
+button {
+    padding: 5px 10px;
+    background-color: #FFA500; /* Orange from GSE logo */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #FF8C00; /* Darker orange */
+}
+
+.error {
+    color: #FF0000; /* Red from YIN logo */
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+footer {
+    text-align: center;
+    padding: 10px;
+    background-color: #006633;
+    color: #fff;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+#stock-chart {
+    max-width: 600px;
+    margin: 0 auto;
+}

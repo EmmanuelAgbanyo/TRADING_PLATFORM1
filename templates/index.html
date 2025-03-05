@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GSE TradeSim</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='images/YIN_LOGO.jpg') }}" alt="YIN Logo" class="logo left">
+        <h1>GSE TradeSim</h1>
+        <img src="{{ url_for('static', filename='images/gse_logo.png') }}" alt="GSE Logo" class="logo right">
+    </header>
+    <main>
+        <section id="search">
+            <input type="text" id="search-input" placeholder="Search stocks by symbol or name...">
+        </section>
+        <section id="stock-list">
+            <h2>Available Stocks</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Name</th>
+                        <th>Price (GH¢)</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="stocks-table-body"></tbody>
+            </table>
+        </section>
+        <section id="portfolio">
+            <h2>Your Portfolio</h2>
+            <p>Cash: <span id="cash">100000.00</span> GH¢</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Shares</th>
+                        <th>Cost (GH¢)</th>
+                        <th>Current Value (GH¢)</th>
+                        <th>Gain/Loss (%)</th>
+                    </tr>
+                </thead>
+                <tbody id="holdings-table-body"></tbody>
+            </table>
+            <p>Total Value: <span id="total-value">100000.00</span> GH¢</p>
+            <button onclick="resetPortfolio()">Reset Portfolio</button>
+            <div id="error-message" class="error"></div>
+        </section>
+        <section id="chart">
+            <h2>Stock Chart</h2>
+            <canvas id="stock-chart"></canvas>
+        </section>
+    </main>
+    <footer>
+        <p>Created by Kofi Busia Kyei</p>
+    </footer>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
