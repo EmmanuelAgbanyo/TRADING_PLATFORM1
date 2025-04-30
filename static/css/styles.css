@@ -1,109 +1,244 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #e6f2e6; /* Light green background inspired by GSE */
+* {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    color: #003399; /* Dark blue text inspired by YIN and GSE */
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f5f7fa;
+    color: #1a2b49;
+    line-height: 1.6;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark-theme {
+    background-color: #1a2b49;
+    color: #e0e6ed;
 }
 
 header {
-    background-color: #006633; /* Green from GSE logo */
-    padding: 10px;
+    background-color: #006633;
+    padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
 header h1 {
     color: #fff;
-    margin: 0;
-    font-size: 24px;
+    font-size: 1.8rem;
+    font-weight: 600;
 }
 
 .logo {
-    width: 150px;
-    height: 50px;
-    object-fit: contain; /* Ensures logos scale properly */
+    height: 60px;
+    object-fit: contain;
 }
 
-.left {
-    margin-right: auto; /* Pushes YIN logo to the left */
+#theme-toggle {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: transform 0.3s;
 }
 
-.right {
-    margin-left: auto; /* Pushes GSE logo to the right */
+#theme-toggle:hover {
+    transform: scale(1.1);
 }
 
 main {
-    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
 }
 
 section {
-    margin-bottom: 20px;
+    margin-bottom: 3rem;
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+body.dark-theme section {
+    background: #2a3b5a;
+}
+
+h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #006633;
+}
+
+body.dark-theme h2 {
+    color: #4fc3a1;
+}
+
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.stat-card {
+    background: #e6f2e6;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+body.dark-theme .stat-card {
+    background: #3a4b6a;
+}
+
+.stat-card h3 {
+    font-size: 1rem;
+    color: #006633;
+}
+
+body.dark-theme .stat-card h3 {
+    color: #4fc3a1;
+}
+
+.stat-card p {
+    font-size: 1.2rem;
+    font-weight: 600;
 }
 
 #search input {
     width: 100%;
-    max-width: 400px;
-    padding: 8px;
-    font-size: 16px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    max-width: 500px;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    transition: border-color 0.3s;
+}
+
+#search input:focus {
+    outline: none;
+    border-color: #006633;
+}
+
+body.dark-theme #search input {
+    background: #3a4b6a;
+    border-color: #4fc3a1;
+    color: #e0e6ed;
+}
+
+.table-container {
+    overflow-x: auto;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 th, td {
-    border: 1px solid #ddd;
-    padding: 10px;
+    padding: 0.75rem;
     text-align: left;
 }
 
 th {
-    background-color: #006633; /* Green from GSE */
+    background-color: #006633;
     color: #fff;
+    font-weight: 600;
+}
+
+body.dark-theme th {
+    background-color: #4fc3a1;
+}
+
+tr:nth-child(even) {
+    background: #f9fafb;
+}
+
+body.dark-theme tr:nth-child(even) {
+    background: #2a3b5a;
 }
 
 td input[type="number"] {
-    width: 60px;
-    padding: 5px;
-}
-
-button {
-    padding: 5px 10px;
-    background-color: #FFA500; /* Orange from GSE logo */
-    color: white;
-    border: none;
+    width: 80px;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
     border-radius: 4px;
-    cursor: pointer;
 }
 
-button:hover {
-    background-color: #FF8C00; /* Darker orange */
+body.dark-theme td input[type="number"] {
+    background: #3a4b6a;
+    border-color: #4fc3a1;
+    color: #e0e6ed;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    background-color: #FFA500;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.btn:hover {
+    background-color: #e69500;
+}
+
+.btn-reset {
+    background-color: #dc2626;
+}
+
+.btn-reset:hover {
+    background-color: #b91c1c;
 }
 
 .error {
-    color: #FF0000; /* Red from YIN logo */
-    font-weight: bold;
-    margin-top: 10px;
+    color: #dc2626;
+    font-weight: 500;
+    margin-top: 1rem;
+}
+
+.chart-container {
+    max-width: 800px;
+    margin: 0 auto;
 }
 
 footer {
     text-align: center;
-    padding: 10px;
+    padding: 1rem;
     background-color: #006633;
     color: #fff;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
+    position: relative;
+    margin-top: 2rem;
 }
 
-#stock-chart {
-    max-width: 600px;
-    margin: 0 auto;
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .logo-container {
+        flex-direction: column;
+    }
+
+    main {
+        padding: 1rem;
+    }
+
+    section {
+        padding: 1rem;
+    }
 }

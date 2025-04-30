@@ -1,155 +1,235 @@
-let stocks = [];
-let portfolio = JSON.parse(localStorage.getItem('portfolio')) || { cash: 100000, holdings: {} };
+// Portfolio state
+let portfolio = {
+    cash: 100000,
+    holdings: JSON.parse(localStorage.getItem('portfolio-holdings')) || {}
+};
 
-// Fetch stocks from the API
+// Chart instance
+let stockChart;
+
+// Helper function to format numbers with commas and two decimal places
+function formatNumber(num) {
+    return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// Fetch and update stocks
 async function fetchStocks() {
     try {
         const response = await fetch('/api/stocks');
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        stocks = await response.json();
-        updateStockTable();
-        updatePortfolioValue();
+        const stocks = await response.json();
+        updateStockTable(stocks);
+        updatePortfolioTable(stocks);
+        updateDashboard(stocks);
     } catch (error) {
-        console.error('Error fetching stocks:', error);
-        document.getElementById('error-message').textContent = `Failed to load stock data: ${error.message}. Please try refreshing the page.`;
+        showError('Failed to fetch stock data. Please try again.');
     }
 }
 
-// Update the stock table with search functionality
-function updateStockTable() {
-    const searchInput = document.getElementById('search-input').value.toLowerCase();
-    const tableBody = document.getElementById('stocks-table-body');
-    tableBody.innerHTML = '';
+// Update stock table
+function updateStockTable(stocks) {
+    const tbody = document.getElementById('stocks-table-body');
+    const searchQuery = document.getElementById('search-input').value.toLowerCase();
+    
+    tbody.innerHTML = '';
     stocks.forEach(stock => {
-        if (stock.symbol.toLowerCase().includes(searchInput) || stock.name.toLowerCase().includes(searchInput)) {
-            const row = `
-                <tr>
-                    <td>${stock.symbol}</td>
-                    <td>${stock.name}</td>
-                    <td>${stock.price.toFixed(2)}</td>
-                    <td>
-                        <input type="number" min="1" id="shares-${stock.symbol}" placeholder="Shares">
-                        <button onclick="buy('${stock.symbol}', ${stock.price})">Buy</button>
-                        <button onclick="sell('${stock.symbol}', ${stock.price})">Sell</button>
-                    </td>
-                </tr>`;
-            tableBody.innerHTML += row;
+        if (stock.name.toLowerCase().includes(searchQuery) || stock.symbol.toLowerCase().includes(searchQuery)) {
+            const row = document.createElement('tr');
+            const change = stock.history.length > 1 ? 
+                ((stock.price - stock.history[stock.history.length - 2].price) / stock.history[stock.history.length - 2].price * 100).toFixed(2) : 0;
+            row.innerHTML = `
+                <td>${stock.symbol}</td>
+                <td>${stock.name}</td>
+                <td>${formatNumber(stock.price)}</td>
+                <td class="${change >= 0 ? 'positive' : 'negative'}">${formatNumber(parseFloat(change))}%</td>
+                <td>
+                    <input type="number" min="1" placeholder="Shares" id="shares-${stock.symbol}">
+                    <button onclick="buyStock('${stock.symbol}', ${stock.price})" class="btn">Buy</button>
+                    <button onclick="sellStock('${stock.symbol}', ${stock.price})" class="btn">Sell</button>
+                </td>
+            `;
+            tbody.appendChild(row);
         }
     });
 }
 
-// Update portfolio value
-function updatePortfolioValue() {
+// Update portfolio table
+function updatePortfolioTable(stocks) {
+    const tbody = document.getElementById('holdings-table-body');
+    tbody.innerHTML = '';
     let totalValue = portfolio.cash;
-    const holdingsTableBody = document.getElementById('holdings-table-body');
-    holdingsTableBody.innerHTML = '';
-    for (const symbol in portfolio.holdings) {
-        const holding = portfolio.holdings[symbol];
+
+    Object.keys(portfolio.holdings).forEach(symbol => {
         const stock = stocks.find(s => s.symbol === symbol);
-        if (stock && stock.price > 0) {
-            const cost = holding.shares * holding.purchase_price;
-            const current_value = holding.shares * stock.price;
-            const gain_loss = ((current_value - cost) / cost) * 100;
-            totalValue += current_value;
-            const row = `
-                <tr>
-                    <td>${symbol}</td>
-                    <td>${holding.shares}</td>
-                    <td>${cost.toFixed(2)}</td>
-                    <td>${current_value.toFixed(2)}</td>
-                    <td>${gain_loss.toFixed(2)}%</td>
-                </tr>`;
-            holdingsTableBody.innerHTML += row;
+        if (stock) {
+            const holding = portfolio.holdings[symbol];
+            const currentValue = holding.shares * stock.price;
+            const gainLoss = ((currentValue - holding.cost) / holding.cost * 100).toFixed(2);
+            totalValue += currentValue;
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${symbol}</td>
+                <td>${formatNumber(holding.shares)}</td>
+                <td>${formatNumber(holding.cost / holding.shares)}</td>
+                <td>${formatNumber(currentValue)}</td>
+                <td class="${gainLoss >= 0 ? 'positive' : 'negative'}">${formatNumber(parseFloat(gainLoss))}%</td>
+                <td>
+                    <button onclick="viewChart('${symbol}')" class="btn">View Chart</button>
+                </td>
+            `;
+            tbody.appendChild(row);
         }
-    }
-    document.getElementById('cash').textContent = portfolio.cash.toFixed(2);
-    document.getElementById('total-value').textContent = totalValue.toFixed(2);
-    localStorage.setItem('portfolio', JSON.stringify(portfolio));
+    });
+
+    document.getElementById('total-value').textContent = formatNumber(totalValue) + ' GHS';
+}
+
+// Update dashboard
+function updateDashboard(stocks) {
+    document.getElementById('cash').textContent = formatNumber(portfolio.cash) + ' GHS';
+    const marketStatus = new Date().getHours() >= 9 && new Date().getHours() < 15 ? 'Open' : 'Open';
+    document.getElementById('market-status').textContent = marketStatus;
 }
 
 // Buy stock
-function buy(symbol, purchase_price) {
+function buyStock(symbol, price) {
     const sharesInput = document.getElementById(`shares-${symbol}`);
     const shares = parseInt(sharesInput.value);
     if (!shares || shares <= 0) {
-        document.getElementById('error-message').textContent = 'Please enter a valid number of shares.';
+        showError('Please enter a valid number of shares.');
         return;
     }
-    const cost = shares * purchase_price;
+
+    const cost = shares * price;
     if (cost > portfolio.cash) {
-        document.getElementById('error-message').textContent = 'Insufficient cash to complete this purchase.';
+        showError('Insufficient cash balance.');
         return;
     }
+
     portfolio.cash -= cost;
     if (portfolio.holdings[symbol]) {
-        const existing = portfolio.holdings[symbol];
-        const totalShares = existing.shares + shares;
-        existing.purchase_price = (existing.purchase_price * existing.shares + purchase_price * shares) / totalShares;
-        existing.shares = totalShares;
+        const holding = portfolio.holdings[symbol];
+        const totalShares = holding.shares + shares;
+        holding.cost = ((holding.cost * holding.shares) + cost) / totalShares;
+        holding.shares = totalShares;
     } else {
-        portfolio.holdings[symbol] = { shares: shares, purchase_price: purchase_price };
+        portfolio.holdings[symbol] = { shares, cost };
     }
-    updatePortfolioValue();
-    document.getElementById('error-message').textContent = `Bought ${shares} shares of ${symbol} successfully.`;
+
+    savePortfolio();
+    fetchStocks();
     sharesInput.value = '';
+    showError('');
 }
 
 // Sell stock
-function sell(symbol, current_price) {
+function sellStock(symbol, price) {
     const sharesInput = document.getElementById(`shares-${symbol}`);
     const shares = parseInt(sharesInput.value);
     if (!shares || shares <= 0) {
-        document.getElementById('error-message').textContent = 'Please enter a valid number of shares.';
+        showError('Please enter a valid number of shares.');
         return;
     }
+
     if (!portfolio.holdings[symbol] || portfolio.holdings[symbol].shares < shares) {
-        document.getElementById('error-message').textContent = 'Not enough shares to sell.';
+        showError('You do not own enough shares.');
         return;
     }
-    const revenue = shares * current_price;
+
+    portfolio.cash += shares * price;
     portfolio.holdings[symbol].shares -= shares;
-    portfolio.cash += revenue;
     if (portfolio.holdings[symbol].shares === 0) {
         delete portfolio.holdings[symbol];
     }
-    updatePortfolioValue();
-    document.getElementById('error-message').textContent = `Sold ${shares} shares of ${symbol} successfully.`;
+
+    savePortfolio();
+    fetchStocks();
     sharesInput.value = '';
+    showError('');
 }
 
 // Reset portfolio
 function resetPortfolio() {
-    localStorage.removeItem('portfolio');
     portfolio = { cash: 100000, holdings: {} };
-    updatePortfolioValue();
-    document.getElementById('error-message').textContent = 'Portfolio reset successfully.';
+    savePortfolio();
+    fetchStocks();
+    showError('Portfolio reset successfully.');
 }
 
-// Search input event listener
-document.getElementById('search-input').addEventListener('input', updateStockTable);
+// Save portfolio to localStorage
+function savePortfolio() {
+    localStorage.setItem('portfolio-holdings', JSON.stringify(portfolio.holdings));
+}
 
-// Initial fetch and update every 10 seconds
-fetchStocks();
-setInterval(fetchStocks, 10000);
+// Show error message
+function showError(message) {
+    const errorDiv = document.getElementById('error-message');
+    errorDiv.textContent = message;
+    if (message) {
+        errorDiv.style.display = 'block';
+        setTimeout(() => errorDiv.style.display = 'none', 3000);
+    }
+}
 
-// Sample chart
-const ctx = document.getElementById('stock-chart').getContext('2d');
-const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-        datasets: [{
-            label: 'Sample Stock Price',
-            data: [12, 19, 3, 5, 2, 3],
-            borderColor: '#FFA500', /* Orange from GSE */
-            backgroundColor: 'rgba(255, 165, 0, 0.2)',
-        }]
-    },
-    options: {
-        scales: {
-            y: {
-                beginAtZero: true
+// View stock chart
+async function viewChart(symbol) {
+    const response = await fetch('/api/stocks');
+    const stocks = await response.json();
+    const stock = stocks.find(s => s.symbol === symbol);
+    if (!stock) return;
+
+    const ctx = document.getElementById('stock-chart').getContext('2d');
+    if (stockChart) stockChart.destroy();
+
+    stockChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: stock.history.map(h => new Date(h.time).toLocaleTimeString()),
+            datasets: [{
+                label: `${symbol} Price (GHS)`,
+                data: stock.history.map(h => h.price),
+                borderColor: '#006633',
+                backgroundColor: 'rgba(0, 102, 51, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { title: { display: true, text: 'Time' } },
+                y: { title: { display: true, text: 'Price (GHS)' } }
             }
         }
-    }
+    });
+}
+
+// Theme toggle
+document.getElementById('theme-toggle').addEventListener('click', () => {
+    document.body.classList.toggle('dark-theme');
+    const icon = document.getElementById('theme-toggle').querySelector('i');
+    icon.classList.toggle('fa-moon');
+    icon.classList.toggle('fa-sun');
+    localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
 });
+
+// Search input
+document.getElementById('search-input').addEventListener('input', fetchStocks);
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-theme');
+        document.getElementById('theme-toggle').querySelector('i').classList.replace('fa-moon', 'fa-sun');
+    }
+    fetchStocks();
+    setInterval(fetchStocks, 60000); // Update every minute
+});
+
+// CSS for dynamic classes
+const style = document.createElement('style');
+style.innerHTML = `
+    .positive { color: #22c55e; }
+    .negative { color: #ef4444; }
+`;
+document.head.appendChild(style);
