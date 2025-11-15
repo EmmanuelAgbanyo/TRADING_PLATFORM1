@@ -31,7 +31,7 @@
             <button id="theme-toggle" aria-label="Toggle theme"><i class="fas fa-moon"></i></button>
         </div>
     </header>
-    
+
     <main>
         <section id="dashboard">
             <div class="section-header">
@@ -80,7 +80,7 @@
                 </div>
             </div>
         </section>
-        
+
         <section id="search">
             <div class="search-container">
                 <i class="fas fa-search"></i>
@@ -97,7 +97,7 @@
                 </select>
             </div>
         </section>
-        
+
         <div class="grid-layout">
             <section id="stock-list" class="card">
                 <div class="section-header">
@@ -127,7 +127,7 @@
                     </table>
                 </div>
             </section>
-            
+
             <section id="portfolio" class="card">
                 <div class="section-header">
                     <h2><span id="portfolio-username">{{ username }}</span>'s Portfolio</h2>
@@ -155,7 +155,7 @@
                 <div id="error-message" class="error"></div>
             </section>
         </div>
-        
+
         <section id="chart" class="card">
             <div class="section-header">
                 <h2>Stock Analysis</h2>
@@ -175,7 +175,7 @@
             </div>
         </section>
     </main>
-    
+
     <!-- Trade Modal -->
     <div id="trade-modal" class="modal">
         <div class="modal-content">
@@ -194,9 +194,7 @@
                     <label for="trade-type">Action:</label>
                     <select id="trade-type">
                         <option value="buy">Buy</option>
-                       部分
-
-System: <option value="sell">Sell</option>
+                        <option value="sell">Sell</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -212,16 +210,18 @@ System: <option value="sell">Sell</option>
             <div id="trade-message" class="trade-message"></div>
         </div>
     </div>
-    
+
     <footer>
-        <p>Created by <a href="https://kofibusia.github.io/kofi-busia-kyei.github.io/" target="_blank">Kofi Busia Kyei</a> for Young Investors Network © 2025</p>
+        <p>&copy; 2025 Young Investors Network</p>
         <div class="footer-links">
-            <a href="#"><i class="fab fa-github"></i> GitHub</a>
-            <a href="#"><i class="fab fa-linkedin"></i> LinkedIn</a>
-            <a href="#"><i class="fas fa-book"></i> Documentation</a>
+            <a href="https://yinvestors.org"><i class="fas fa-globe"></i> Young Investors Network</a>
+            <a href="https://younginvestorcalculator.com"><i class="fas fa-calculator"></i> Young Investor Calculator</a>
+            <a href="https://github.com/KofiBusia"><i class="fab fa-github"></i> GitHub</a>
+            <a href="https://www.linkedin.com/in/kofi-busia-kyei-24a6661b8/"><i class="fab fa-linkedin"></i> LinkedIn</a>
+            <a href="/manual"><i class="fas fa-book"></i> User Manual</a>
         </div>
     </footer>
-    
+
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
