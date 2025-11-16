@@ -12,6 +12,7 @@ app.secret_key = 'your_secret_key_here_change_in_production'  # Change this in p
 # In-memory user database
 # -----------------------------
 users = {}
+admin_password = "admin123"  # Change this in production
 
 # -----------------------------
 # GSE stock universe with initial prices
@@ -161,12 +162,12 @@ def apply_stop_losses():
 
 def update_prices():
     """
-    Simulate price changes (±2%) for stocks every minute,
+    Simulate price changes (±2%) for stocks every 10 seconds,
     ensuring prices stay non-negative and are shared across ALL users.
     This runs in a background thread.
     """
     while True:
-        time.sleep(60)  # Update every 60 seconds
+        time.sleep(10)  # Update every 10 seconds (changed from 60)
         
         with stock_lock:
             now = datetime.now()
@@ -213,6 +214,8 @@ def get_current_user():
         return users[username]
     return None
 
+def is_admin():
+    return session.get("is_admin", False)
 
 # -----------------------------
 # Routes: pages
@@ -230,6 +233,13 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
 
+        # Check if admin login
+        if username == "admin" and password == admin_password:
+            session["user_id"] = "admin"
+            session["username"] = "admin"
+            session["is_admin"] = True
+            return redirect(url_for("admin_dashboard"))
+
         if not username or not password:
             return render_template("login.html", error="Please enter both username and password")
 
@@ -239,6 +249,7 @@ def login():
 
         session["user_id"] = user["id"]
         session["username"] = username
+        session["is_admin"] = False
         return redirect(url_for("index"))
 
     return render_template("login.html")
@@ -271,6 +282,7 @@ def signup():
 
         session["user_id"] = user_id
         session["username"] = username
+        session["is_admin"] = False
         return redirect(url_for("index"))
 
     return render_template("signup.html")
@@ -280,7 +292,15 @@ def signup():
 def logout():
     session.pop("user_id", None)
     session.pop("username", None)
+    session.pop("is_admin", None)
     return redirect(url_for("login"))
+
+
+@app.route("/admin")
+def admin_dashboard():
+    if not is_admin():
+        return redirect(url_for("login"))
+    return render_template("admin.html")
 
 
 # -----------------------------
@@ -536,6 +556,120 @@ def get_stock_history(symbol):
     if not stock:
         return jsonify({"error": "Stock not found"}), 404
     return jsonify(stock["history"])
+
+
+@app.route("/api/admin/leaderboard")
+def get_admin_leaderboard():
+    """Get competition leaderboard for admin only"""
+    if not is_admin():
+        return jsonify({"error": "Admin access required"}), 403
+
+    leaderboard = []
+    
+    with user_lock:
+        for username, user in users.items():
+            portfolio = user["portfolio"]
+            current_value = portfolio["total_value"]
+            starting_value = 100000.00
+            growth = ((current_value - starting_value) / starting_value) * 100
+            
+            # Calculate holdings value breakdown
+            holdings_value = {}
+            for symbol, holding in portfolio["holdings"].items():
+                stock = next((s for s in stocks if s["symbol"] == symbol), None)
+                if stock:
+                    holdings_value[symbol] = {
+                        "shares": holding["shares"],
+                        "current_value": holding["shares"] * stock["price"],
+                        "avg_cost": holding["avg_cost"]
+                    }
+            
+            leaderboard.append({
+                "username": username,
+                "portfolio_value": current_value,
+                "growth_percent": round(growth, 2),
+                "cash": portfolio["cash"],
+                "holdings_count": len(portfolio["holdings"]),
+                "holdings_value": holdings_value,
+                "total_trades": len(portfolio["transactions"]),
+                "rank": 0  # Will be set after sorting
+            })
+    
+    # Sort by portfolio value (highest first)
+    leaderboard.sort(key=lambda x: x["portfolio_value"], reverse=True)
+    
+    # Assign ranks
+    for i, entry in enumerate(leaderboard):
+        entry["rank"] = i + 1
+    
+    return jsonify(leaderboard)
+
+
+@app.route("/api/admin/users")
+def get_admin_users():
+    """Get all users data for admin"""
+    if not is_admin():
+        return jsonify({"error": "Admin access required"}), 403
+
+    users_data = []
+    
+    with user_lock:
+        for username, user in users.items():
+            portfolio = user["portfolio"]
+            current_value = portfolio["total_value"]
+            starting_value = 100000.00
+            growth = ((current_value - starting_value) / starting_value) * 100
+            
+            users_data.append({
+                "username": username,
+                "portfolio_value": current_value,
+                "growth_percent": round(growth, 2),
+                "cash": portfolio["cash"],
+                "holdings_count": len(portfolio["holdings"]),
+                "total_trades": len(portfolio["transactions"]),
+                "registered_at": "Active"  # Since we don't store registration time
+            })
+    
+    return jsonify(users_data)
+
+
+@app.route("/api/admin/stats")
+def get_admin_stats():
+    """Get admin dashboard statistics"""
+    if not is_admin():
+        return jsonify({"error": "Admin access required"}), 403
+
+    with user_lock:
+        total_users = len(users)
+        total_portfolio_value = sum(user["portfolio"]["total_value"] for user in users.values())
+        average_portfolio_value = total_portfolio_value / total_users if total_users > 0 else 0
+        active_traders = sum(1 for user in users.values() if len(user["portfolio"]["holdings"]) > 0)
+        total_trades = sum(len(user["portfolio"]["transactions"]) for user in users.values())
+        
+        # Market stats
+        with stock_lock:
+            total_market_cap = sum(stock["price"] * 1000000 for stock in stocks)  # Simulated market cap
+            biggest_gainer = max(stocks, key=lambda x: x["price"])
+            biggest_loser = min(stocks, key=lambda x: x["price"])
+    
+    return jsonify({
+        "total_users": total_users,
+        "total_portfolio_value": round(total_portfolio_value, 2),
+        "average_portfolio_value": round(average_portfolio_value, 2),
+        "active_traders": active_traders,
+        "total_trades": total_trades,
+        "market_stats": {
+            "total_market_cap": round(total_market_cap, 2),
+            "biggest_gainer": {
+                "symbol": biggest_gainer["symbol"],
+                "price": biggest_gainer["price"]
+            },
+            "biggest_loser": {
+                "symbol": biggest_loser["symbol"],
+                "price": biggest_loser["price"]
+            }
+        }
+    })
 
 
 # -----------------------------
