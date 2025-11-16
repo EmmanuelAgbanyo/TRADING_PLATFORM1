@@ -3,225 +3,919 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GSE TradeSim - Young Investors Network</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>GSE Trading Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 0;
+        }
+
+        /* Header Styles */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logout-btn {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        /* Ticker Styles */
+        .ticker-container {
+            background: #1a202c;
+            color: white;
+            padding: 0.75rem 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .ticker {
+            display: flex;
+            animation: ticker-scroll 60s linear infinite;
+            white-space: nowrap;
+        }
+
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            margin-right: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .ticker-symbol {
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .ticker-price {
+            margin-right: 0.25rem;
+        }
+
+        .price-up {
+            color: #48bb78;
+        }
+
+        .price-down {
+            color: #f56565;
+        }
+
+        @keyframes ticker-scroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        /* Portfolio Summary */
+        .portfolio-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 12px;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #718096;
+        }
+
+        .btn-danger {
+            background: #e53e3e;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 0.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* Alert Styles */
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        /* Responsive */
+        @media (min-width: 768px) {
+            .main-content {
+                padding: 2rem;
+            }
+            
+            .portfolio-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+            }
+            
+            .btn {
+                width: auto;
+            }
+        }
+
+        /* Loading States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <div class="logo-container">
-            <img src="{{ url_for('static', filename='images/YIN_LOGO.jpg') }}" alt="YIN Logo" class="logo">
-            <h1>GSE TradeSim</h1>
-            <img src="{{ url_for('static', filename='images/gse_logo.png') }}" alt="GSE Logo" class="logo">
-        </div>
-        <div class="header-actions">
-            <div class="market-time">
-                <i class="fas fa-clock"></i>
-                <span id="current-time">--:--:--</span>
-            </div>
-            <div class="user-info">
-                <i class="fas fa-user-circle"></i>
-                <span id="username">{{ username }}</span>
-                <button id="logout-btn" class="btn btn-outline">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
-            </div>
-            <button id="theme-toggle" aria-label="Toggle theme"><i class="fas fa-moon"></i></button>
-        </div>
-    </header>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <nav class="nav">
+                <div class="logo">📈 GSE Trader</div>
+                <div class="user-info">
+                    <span>Welcome, {{ username }}</span>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+            </nav>
+        </header>
 
-    <main>
-        <section id="dashboard">
-            <div class="section-header">
-                <h2>Market Dashboard</h2>
-                <div class="market-indicator">
-                    <i class="fas fa-chart-line"></i>
-                    <span id="market-status">Market Open</span>
-                </div>
+        <!-- Stock Ticker -->
+        <div class="ticker-container">
+            <div class="ticker" id="stockTicker">
+                <!-- Ticker items will be populated by JavaScript -->
             </div>
-            <div class="dashboard-stats">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>Cash Balance</h3>
-                        <p id="cash">100,000.00 GHS</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-chart-pie"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>Portfolio Value</h3>
-                        <p id="total-value">100,000.00 GHS</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-coins"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>Today's Gain/Loss</h3>
-                        <p id="daily-change">+0.00%</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-trophy"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>Top Performer</h3>
-                        <p id="top-performer">BOPP (+2.1%)</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="search">
-            <div class="search-container">
-                <i class="fas fa-search"></i>
-                <input type="text" id="search-input" placeholder="Search stocks by symbol, name or sector..." aria-label="Search stocks">
-                <select id="sector-filter">
-                    <option value="">All Sectors</option>
-                    <option value="Financial Services">Financial Services</option>
-                    <option value="Mining">Mining</option>
-                    <option value="Energy">Energy</option>
-                    <option value="Consumer Goods">Consumer Goods</option>
-                    <option value="Telecom">Telecom</option>
-                    <option value="Insurance">Insurance</option>
-                    <option value="Agriculture">Agriculture</option>
-                </select>
-            </div>
-        </section>
-
-        <div class="grid-layout">
-            <section id="stock-list" class="card">
-                <div class="section-header">
-                    <h2>Available Stocks</h2>
-                    <div class="sort-options">
-                        <span>Sort by:</span>
-                        <select id="stock-sort">
-                            <option value="name">Name</option>
-                            <option value="price">Price</option>
-                            <option value="change">Change</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Symbol</th>
-                                <th>Name</th>
-                                <th>Sector</th>
-                                <th>Price (GHS)</th>
-                                <th>Change (%)</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="stocks-table-body"></tbody>
-                    </table>
-                </div>
-            </section>
-
-            <section id="portfolio" class="card">
-                <div class="section-header">
-                    <h2><span id="portfolio-username">{{ username }}</span>'s Portfolio</h2>
-                    <div class="portfolio-actions">
-                        <button onclick="resetPortfolio()" class="btn btn-reset">
-                            <i class="fas fa-redo"></i> Reset
-                        </button>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Symbol</th>
-                                <th>Shares</th>
-                                <th>Avg. Cost (GHS)</th>
-                                <th>Current Value (GHS)</th>
-                                <th>Gain/Loss (%)</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="holdings-table-body"></tbody>
-                    </table>
-                </div>
-                <div id="error-message" class="error"></div>
-            </section>
         </div>
 
-        <section id="chart" class="card">
-            <div class="section-header">
-                <h2>Stock Analysis</h2>
-                <div id="chart-controls">
-                    <div class="timeframe-selector">
-                        <button class="timeframe-btn active" data-timeframe="1h">1H</button>
-                        <button class="timeframe-btn" data-timeframe="1d">1D</button>
-                        <button class="timeframe-btn" data-timeframe="1w">1W</button>
-                    </div>
-                    <select id="stock-selector">
-                        <option value="">Select a stock...</option>
-                    </select>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Portfolio Summary -->
+            <div class="card">
+                <div class="portfolio-summary" id="portfolioSummary">
+                    <!-- Portfolio data will be populated by JavaScript -->
                 </div>
             </div>
-            <div class="chart-container">
-                <canvas id="stock-chart"></canvas>
-            </div>
-        </section>
-    </main>
 
-    <!-- Trade Modal -->
-    <div id="trade-modal" class="modal">
+            <!-- Tabs -->
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('stocks')">Stocks</div>
+                <div class="tab" onclick="switchTab('portfolio')">Portfolio</div>
+                <div class="tab" onclick="switchTab('trade')">Trade</div>
+                <div class="tab" onclick="switchTab('alerts')">Alerts</div>
+            </div>
+
+            <!-- Stocks Tab -->
+            <div id="stocks-tab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Ghana Stock Exchange</h2>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Name</th>
+                                    <th>Price (GHS)</th>
+                                    <th>Change</th>
+                                    <th>Sector</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stocksTable">
+                                <!-- Stocks data will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portfolio Tab -->
+            <div id="portfolio-tab" class="tab-content" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Your Portfolio</h2>
+                        <button class="btn btn-danger" onclick="resetPortfolio()">Reset Portfolio</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Shares</th>
+                                    <th>Avg Cost</th>
+                                    <th>Current Price</th>
+                                    <th>P&L</th>
+                                    <th>Stop Loss</th>
+                                    <th>Price Target</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="portfolioTable">
+                                <!-- Portfolio data will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Transactions -->
+                <div class="card">
+                    <h2 class="card-title">Recent Transactions</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Type</th>
+                                    <th>Symbol</th>
+                                    <th>Shares</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionsTable">
+                                <!-- Transactions data will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trade Tab -->
+            <div id="trade-tab" class="tab-content" style="display: none;">
+                <div class="card">
+                    <h2 class="card-title">Trade Stocks</h2>
+                    <form id="tradeForm">
+                        <div class="form-group">
+                            <label for="tradeAction">Action</label>
+                            <select id="tradeAction" onchange="toggleTradeForm()">
+                                <option value="buy">Buy</option>
+                                <option value="sell">Sell</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tradeSymbol">Stock Symbol</label>
+                            <input type="text" id="tradeSymbol" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tradeShares">Shares</label>
+                            <input type="number" id="tradeShares" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="orderType">Order Type</label>
+                            <select id="orderType" onchange="toggleOrderSettings()">
+                                <option value="market">Market</option>
+                                <option value="limit">Limit</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="limitPriceGroup" style="display: none;">
+                            <label for="limitPrice">Limit Price (GHS)</label>
+                            <input type="number" id="limitPrice" step="0.01" min="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="stopLoss">Stop Loss (GHS) - Optional</label>
+                            <input type="number" id="stopLoss" step="0.01" min="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="priceTarget">Price Target (GHS) - Optional</label>
+                            <input type="number" id="priceTarget" step="0.01" min="0.01">
+                        </div>
+                        <button type="submit" class="btn" id="tradeButton">Execute Trade</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Alerts Tab -->
+            <div id="alerts-tab" class="tab-content" style="display: none;">
+                <div class="card">
+                    <h2 class="card-title">Recent Alerts</h2>
+                    <div id="alertsContainer">
+                        <!-- Alerts will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Alert Modal -->
+    <div class="modal" id="alertModal">
         <div class="modal-content">
-            <span class="close">&times;</span>
-            <h3 id="trade-title">Trade Stock</h3>
-            <div class="stock-info">
-                <span id="trade-symbol">SYMBOL</span>
-                <span id="trade-name">Company Name</span>
-                <div class="price-info">
-                    <span id="trade-price">0.00</span>
-                    <span id="trade-change" class="positive">+0.00%</span>
-                </div>
-            </div>
-            <div class="trade-form">
-                <div class="form-group">
-                    <label for="trade-type">Action:</label>
-                    <select id="trade-type">
-                        <option value="buy">Buy</option>
-                        <option value="sell">Sell</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="trade-shares">Shares:</label>
-                    <input type="number" id="trade-shares" min="1" value="1">
-                </div>
-                <div class="form-group">
-                    <label>Estimated Cost:</label>
-                    <span id="trade-estimate">0.00 GHS</span>
-                </div>
-                <button id="confirm-trade" class="btn">Confirm Trade</button>
-            </div>
-            <div id="trade-message" class="trade-message"></div>
+            <h3>Trade Alert</h3>
+            <div id="alertMessage"></div>
+            <button class="btn" onclick="closeAlertModal()">OK</button>
         </div>
     </div>
 
-    <footer>
-        <p>&copy; 2025 Young Investors Network</p>
-        <div class="footer-links">
-            <a href="https://yinvestors.org"><i class="fas fa-globe"></i> Young Investors Network</a>
-            <a href="https://younginvestorcalculator.com"><i class="fas fa-calculator"></i> Young Investor Calculator</a>
-            <a href="https://github.com/KofiBusia"><i class="fab fa-github"></i> GitHub</a>
-            <a href="https://www.linkedin.com/in/kofi-busia-kyei-24a6661b8/"><i class="fab fa-linkedin"></i> LinkedIn</a>
-            <a href="/manual"><i class="fas fa-book"></i> User Manual</a>
-        </div>
-    </footer>
+    <script>
+        let currentStocks = [];
+        let currentPortfolio = {};
+        let updateInterval;
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            updateInterval = setInterval(loadData, 5000); // Update every 5 seconds
+        });
+
+        // Load all data
+        async function loadData() {
+            await Promise.all([
+                loadStocks(),
+                loadPortfolio(),
+                loadAlerts()
+            ]);
+            updateTicker();
+        }
+
+        // Load stocks data
+        async function loadStocks() {
+            try {
+                const response = await fetch('/api/stocks');
+                currentStocks = await response.json();
+                updateStocksTable();
+            } catch (error) {
+                console.error('Error loading stocks:', error);
+            }
+        }
+
+        // Load portfolio data
+        async function loadPortfolio() {
+            try {
+                const response = await fetch('/api/portfolio');
+                currentPortfolio = await response.json();
+                updatePortfolioSummary();
+                updatePortfolioTable();
+                updateTransactionsTable();
+            } catch (error) {
+                console.error('Error loading portfolio:', error);
+            }
+        }
+
+        // Load alerts
+        async function loadAlerts() {
+            try {
+                const response = await fetch('/api/alerts');
+                const alerts = await response.json();
+                updateAlertsTable(alerts);
+            } catch (error) {
+                console.error('Error loading alerts:', error);
+            }
+        }
+
+        // Update stock ticker
+        function updateTicker() {
+            const ticker = document.getElementById('stockTicker');
+            ticker.innerHTML = '';
+            
+            currentStocks.forEach(stock => {
+                const tickerItem = document.createElement('div');
+                tickerItem.className = 'ticker-item';
+                
+                const symbol = document.createElement('span');
+                symbol.className = 'ticker-symbol';
+                symbol.textContent = stock.symbol;
+                
+                const price = document.createElement('span');
+                price.className = 'ticker-price';
+                price.textContent = `GHS ${stock.price.toFixed(2)}`;
+                
+                tickerItem.appendChild(symbol);
+                tickerItem.appendChild(price);
+                ticker.appendChild(tickerItem);
+            });
+        }
+
+        // Update stocks table
+        function updateStocksTable() {
+            const table = document.getElementById('stocksTable');
+            table.innerHTML = '';
+            
+            currentStocks.forEach(stock => {
+                const row = document.createElement('tr');
+                
+                // Get previous price from history for change calculation
+                const prevPrice = stock.history.length > 1 ? stock.history[stock.history.length - 2].price : stock.price;
+                const change = stock.price - prevPrice;
+                const changePercent = ((change / prevPrice) * 100).toFixed(2);
+                
+                row.innerHTML = `
+                    <td><strong>${stock.symbol}</strong></td>
+                    <td>${stock.name}</td>
+                    <td>GHS ${stock.price.toFixed(2)}</td>
+                    <td class="${change >= 0 ? 'price-up' : 'price-down'}">
+                        ${change >= 0 ? '+' : ''}${changePercent}%
+                    </td>
+                    <td>${stock.sector}</td>
+                    <td>
+                        <button class="btn" onclick="quickTrade('${stock.symbol}')">Trade</button>
+                    </td>
+                `;
+                
+                table.appendChild(row);
+            });
+        }
+
+        // Update portfolio summary
+        function updatePortfolioSummary() {
+            const summary = document.getElementById('portfolioSummary');
+            const portfolio = currentPortfolio;
+            
+            summary.innerHTML = `
+                <div class="summary-item">
+                    <div class="summary-value">GHS ${portfolio.cash.toFixed(2)}</div>
+                    <div class="summary-label">Available Cash</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">GHS ${portfolio.total_value.toFixed(2)}</div>
+                    <div class="summary-label">Portfolio Value</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">${Object.keys(portfolio.holdings).length}</div>
+                    <div class="summary-label">Holdings</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">${portfolio.transactions.length}</div>
+                    <div class="summary-label">Total Trades</div>
+                </div>
+            `;
+        }
+
+        // Update portfolio table
+        function updatePortfolioTable() {
+            const table = document.getElementById('portfolioTable');
+            table.innerHTML = '';
+            
+            Object.entries(currentPortfolio.holdings).forEach(([symbol, holding]) => {
+                const stock = currentStocks.find(s => s.symbol === symbol);
+                if (!stock) return;
+                
+                const currentValue = holding.shares * stock.price;
+                const avgCost = holding.avg_cost * holding.shares;
+                const pnl = currentValue - avgCost;
+                const pnlPercent = ((pnl / avgCost) * 100).toFixed(2);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${symbol}</strong></td>
+                    <td>${holding.shares}</td>
+                    <td>GHS ${holding.avg_cost.toFixed(2)}</td>
+                    <td>GHS ${stock.price.toFixed(2)}</td>
+                    <td class="${pnl >= 0 ? 'price-up' : 'price-down'}">
+                        GHS ${pnl.toFixed(2)} (${pnlPercent}%)
+                    </td>
+                    <td>${holding.stop_loss ? 'GHS ' + holding.stop_loss.toFixed(2) : 'Not set'}</td>
+                    <td>${holding.price_target ? 'GHS ' + holding.price_target.toFixed(2) : 'Not set'}</td>
+                    <td>
+                        <button class="btn" onclick="updateOrderSettings('${symbol}')">Update</button>
+                    </td>
+                `;
+                
+                table.appendChild(row);
+            });
+        }
+
+        // Update transactions table
+        function updateTransactionsTable() {
+            const table = document.getElementById('transactionsTable');
+            const transactions = currentPortfolio.transactions.slice(-10).reverse(); // Show last 10 transactions
+            
+            table.innerHTML = '';
+            
+            transactions.forEach(transaction => {
+                const date = new Date(transaction.timestamp);
+                const timeString = date.toLocaleTimeString();
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${timeString}</td>
+                    <td>${transaction.type}</td>
+                    <td>${transaction.symbol}</td>
+                    <td>${transaction.shares}</td>
+                    <td>GHS ${transaction.price.toFixed(2)}</td>
+                    <td>GHS ${transaction.total.toFixed(2)}</td>
+                `;
+                
+                table.appendChild(row);
+            });
+        }
+
+        // Update alerts table
+        function updateAlertsTable(alerts) {
+            const container = document.getElementById('alertsContainer');
+            container.innerHTML = '';
+            
+            if (alerts.stop_loss.length === 0 && alerts.price_target.length === 0) {
+                container.innerHTML = '<p>No recent alerts.</p>';
+                return;
+            }
+            
+            // Show stop loss alerts
+            alerts.stop_loss.forEach(alert => {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-error';
+                alertDiv.innerHTML = `
+                    <strong>Stop Loss Triggered</strong><br>
+                    ${alert.shares} shares of ${alert.symbol} sold at GHS ${alert.price.toFixed(2)}<br>
+                    <small>Total: GHS ${alert.total.toFixed(2)}</small>
+                `;
+                container.appendChild(alertDiv);
+            });
+            
+            // Show price target alerts
+            alerts.price_target.forEach(alert => {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success';
+                alertDiv.innerHTML = `
+                    <strong>Price Target Reached</strong><br>
+                    ${alert.symbol} reached GHS ${alert.current_price.toFixed(2)} (Target: GHS ${alert.price_target.toFixed(2)})<br>
+                    <small>You own ${alert.shares} shares</small>
+                `;
+                container.appendChild(alertDiv);
+            });
+        }
+
+        // Trade form handling
+        document.getElementById('tradeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const action = document.getElementById('tradeAction').value;
+            const symbol = document.getElementById('tradeSymbol').value.toUpperCase();
+            const shares = parseInt(document.getElementById('tradeShares').value);
+            const orderType = document.getElementById('orderType').value;
+            const limitPrice = document.getElementById('limitPrice').value;
+            const stopLoss = document.getElementById('stopLoss').value;
+            const priceTarget = document.getElementById('priceTarget').value;
+            
+            const tradeData = {
+                symbol: symbol,
+                shares: shares,
+                order_type: orderType,
+                limit_price: limitPrice || null,
+                stop_loss: stopLoss || null,
+                price_target: priceTarget || null
+            };
+            
+            try {
+                const response = await fetch(`/api/${action}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(tradeData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert(`${action.toUpperCase()} order executed successfully!`);
+                    loadData(); // Reload all data
+                    document.getElementById('tradeForm').reset();
+                    toggleOrderSettings(); // Reset form visibility
+                } else {
+                    showAlert(`Error: ${result.error}`, true);
+                }
+            } catch (error) {
+                showAlert('Network error. Please try again.', true);
+            }
+        });
+
+        // Quick trade function
+        function quickTrade(symbol) {
+            document.getElementById('tradeSymbol').value = symbol;
+            switchTab('trade');
+            document.getElementById('tradeShares').focus();
+        }
+
+        // Update order settings
+        async function updateOrderSettings(symbol) {
+            const stopLoss = prompt(`Enter new stop loss price for ${symbol}:`, '');
+            const priceTarget = prompt(`Enter new price target for ${symbol}:`, '');
+            
+            if (stopLoss === null && priceTarget === null) return;
+            
+            try {
+                const response = await fetch('/api/update_order_settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        symbol: symbol,
+                        stop_loss: stopLoss || null,
+                        price_target: priceTarget || null
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Order settings updated successfully!');
+                    loadData();
+                } else {
+                    showAlert(`Error: ${result.error}`, true);
+                }
+            } catch (error) {
+                showAlert('Network error. Please try again.', true);
+            }
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).style.display = 'block';
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // Toggle order settings visibility
+        function toggleOrderSettings() {
+            const orderType = document.getElementById('orderType').value;
+            const limitPriceGroup = document.getElementById('limitPriceGroup');
+            
+            if (orderType === 'limit') {
+                limitPriceGroup.style.display = 'block';
+            } else {
+                limitPriceGroup.style.display = 'none';
+            }
+        }
+
+        // Toggle trade form based on action
+        function toggleTradeForm() {
+            // You can add specific logic for buy vs sell forms here
+        }
+
+        // Reset portfolio
+        async function resetPortfolio() {
+            if (!confirm('Are you sure you want to reset your portfolio? This will clear all holdings and transactions.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/reset', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    showAlert('Portfolio reset successfully!');
+                    loadData();
+                } else {
+                    showAlert('Error resetting portfolio', true);
+                }
+            } catch (error) {
+                showAlert('Network error. Please try again.', true);
+            }
+        }
+
+        // Alert modal functions
+        function showAlert(message, isError = false) {
+            const modal = document.getElementById('alertModal');
+            const messageDiv = document.getElementById('alertMessage');
+            
+            messageDiv.innerHTML = message;
+            messageDiv.className = isError ? 'alert-error' : 'alert-success';
+            modal.style.display = 'flex';
+        }
+
+        function closeAlertModal() {
+            document.getElementById('alertModal').style.display = 'none';
+        }
+
+        // Logout function
+        function logout() {
+            window.location.href = '/logout';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('alertModal');
+            if (event.target === modal) {
+                closeAlertModal();
+            }
+        }
+    </script>
 </body>
 </html>
