@@ -23,6 +23,7 @@
             --background: #f8f9fa;
             --card-bg: #ffffff;
             --error: #e63946;
+            --warning: #ff6b00;
             --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             --radius: 16px;
         }
@@ -303,6 +304,33 @@
             text-decoration: none;
         }
 
+        .disclaimer {
+            background: rgba(255, 107, 0, 0.1);
+            border: 1px solid var(--warning);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .disclaimer-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            color: var(--warning);
+            font-weight: 600;
+        }
+
+        .disclaimer-header i {
+            margin-right: 8px;
+        }
+
+        .disclaimer-content {
+            color: var(--text);
+            font-size: 0.8rem;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -374,6 +402,20 @@
             <div class="auth-card">
                 <h2>Create Your Account</h2>
                 <p class="auth-subtitle">Join our trading community today</p>
+
+                <!-- Disclaimer Section -->
+                <div class="disclaimer">
+                    <div class="disclaimer-header">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        IMPORTANT DISCLAIMER
+                    </div>
+                    <div class="disclaimer-content">
+                        <strong>This is a simulation platform for educational purposes only.</strong> 
+                        The Ghana Stock Exchange (GSE) and its listed companies have no affiliation with this platform. 
+                        All stock prices, market data, and trading activities are simulated and do not represent real market conditions. 
+                        No real money is involved - this is purely for training and competition purposes.
+                    </div>
+                </div>
 
                 {% if error %}
                 <div class="auth-error">
