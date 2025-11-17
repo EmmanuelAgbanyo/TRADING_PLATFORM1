@@ -90,6 +90,11 @@
             color: white;
         }
 
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
         .btn-danger {
             background: var(--danger);
             color: white;
@@ -244,6 +249,9 @@
                 <a href="/" class="btn btn-secondary">
                     <i class="fas fa-home"></i> Main App
                 </a>
+                <button class="btn btn-warning" onclick="resetCompetition()" id="resetBtn">
+                    <i class="fas fa-redo"></i> Reset Competition
+                </button>
                 <a href="/logout" class="btn btn-danger">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
@@ -324,6 +332,40 @@
                 loadLeaderboard(),
                 loadUsers()
             ]);
+        }
+
+        // Reset competition
+        async function resetCompetition() {
+            if (!confirm('⚠️ ARE YOU SURE?\n\nThis will DELETE ALL TRADERS and reset the competition.\nAll user data will be permanently lost!\n\nThis action cannot be undone.')) {
+                return;
+            }
+            
+            const resetBtn = document.getElementById('resetBtn');
+            const originalText = resetBtn.innerHTML;
+            resetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
+            resetBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/admin/reset_competition', {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ Competition reset successfully!\n\nAll users have been cleared. New traders can now register.');
+                    // Reload the page to show empty state
+                    location.reload();
+                } else {
+                    alert('❌ Error: ' + result.error);
+                    resetBtn.innerHTML = originalText;
+                    resetBtn.disabled = false;
+                }
+            } catch (error) {
+                alert('❌ Network error. Please try again.');
+                resetBtn.innerHTML = originalText;
+                resetBtn.disabled = false;
+            }
         }
 
         // Load statistics

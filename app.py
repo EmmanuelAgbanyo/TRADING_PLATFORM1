@@ -672,6 +672,18 @@ def get_admin_stats():
     })
 
 
+@app.route("/api/admin/reset_competition", methods=["POST"])
+def reset_competition():
+    """Reset competition - clear all users (admin only)"""
+    if not is_admin():
+        return jsonify({"error": "Admin access required"}), 403
+    
+    with user_lock:
+        users.clear()
+    
+    return jsonify({"success": True, "message": "Competition reset successfully. All users cleared."})
+
+
 # -----------------------------
 # Entry point
 # -----------------------------
