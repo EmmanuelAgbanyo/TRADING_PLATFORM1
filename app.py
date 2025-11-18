@@ -46,6 +46,9 @@ stocks = [
 stock_lock = threading.Lock()
 user_lock = threading.Lock()
 
+# Market status
+market_open = False
+
 # -----------------------------
 # Portfolio helpers
 # -----------------------------
@@ -163,37 +166,38 @@ def apply_stop_losses():
 def update_prices():
     """
     Simulate price changes (±2%) for stocks every 10 seconds,
-    ensuring prices stay non-negative and are shared across ALL users.
+    but only when market is open.
     This runs in a background thread.
     """
     while True:
-        time.sleep(10)  # Update every 10 seconds (changed from 60)
+        time.sleep(10)  # Check every 10 seconds
         
         with stock_lock:
-            now = datetime.now()
-            for stock in stocks:
-                if stock["price"] > 0:
-                    change = random.uniform(-0.02, 0.02)
-                    stock["price"] = max(0.01, stock["price"] * (1 + change))
-                    stock["price"] = round(stock["price"], 2)
+            if market_open:
+                now = datetime.now()
+                for stock in stocks:
+                    if stock["price"] > 0:
+                        change = random.uniform(-0.02, 0.02)
+                        stock["price"] = max(0.01, stock["price"] * (1 + change))
+                        stock["price"] = round(stock["price"], 2)
 
-                    # Store price history for simple intraday charts
-                    stock["history"].append({"time": now.isoformat(), "price": stock["price"]})
-                    if len(stock["history"]) > 100:
-                        stock["history"].pop(0)
+                        # Store price history for simple intraday charts
+                        stock["history"].append({"time": now.isoformat(), "price": stock["price"]})
+                        if len(stock["history"]) > 100:
+                            stock["history"].pop(0)
 
-            # After prices move, check stop-loss for everyone
-            stop_loss_executions = apply_stop_losses()
-            price_target_alerts = check_price_targets()
-            
-            # Store recent alerts for frontend (last 50 of each)
-            if hasattr(app, 'recent_alerts'):
-                app.recent_alerts['stop_loss'].extend(stop_loss_executions)
-                app.recent_alerts['price_target'].extend(price_target_alerts)
+                # After prices move, check stop-loss for everyone
+                stop_loss_executions = apply_stop_losses()
+                price_target_alerts = check_price_targets()
                 
-                # Keep only last 50 alerts
-                app.recent_alerts['stop_loss'] = app.recent_alerts['stop_loss'][-50:]
-                app.recent_alerts['price_target'] = app.recent_alerts['price_target'][-50:]
+                # Store recent alerts for frontend (last 50 of each)
+                if hasattr(app, 'recent_alerts'):
+                    app.recent_alerts['stop_loss'].extend(stop_loss_executions)
+                    app.recent_alerts['price_target'].extend(price_target_alerts)
+                    
+                    # Keep only last 50 alerts
+                    app.recent_alerts['stop_loss'] = app.recent_alerts['stop_loss'][-50:]
+                    app.recent_alerts['price_target'] = app.recent_alerts['price_target'][-50:]
 
 
 # Start background price update thread
@@ -314,7 +318,10 @@ def get_stocks():
     - rolling ticker at the top of the screen (front-end JS)
     """
     with stock_lock:
-        return jsonify(stocks)
+        stocks_data = [stock.copy() for stock in stocks]
+        for stock in stocks_data:
+            stock['market_open'] = market_open
+        return jsonify(stocks_data)
 
 
 @app.route("/api/portfolio")
@@ -325,6 +332,7 @@ def get_portfolio():
 
     portfolio = user["portfolio"]
     portfolio["total_value"] = calculate_portfolio_value(portfolio)
+    portfolio["market_open"] = market_open
     return jsonify(portfolio)
 
 
@@ -346,6 +354,10 @@ def buy_stock():
 
     if not stock:
         return jsonify({"error": "Stock not found"}), 404
+
+    # Check if market is open
+    if not market_open:
+        return jsonify({"error": "Market is currently closed. Trading is not allowed."}), 400
 
     # Order fields
     order_type = (data.get("order_type") or "market").lower()
@@ -429,7 +441,7 @@ def buy_stock():
         })
 
         portfolio["total_value"] = calculate_portfolio_value(portfolio)
-        return jsonify({"success": True, "portfolio": portfolio})
+        return jsonify({"success": True, "portfolio": portfolio, "order_value": round(total_cost, 2)})
 
 
 @app.route("/api/sell", methods=["POST"])
@@ -450,6 +462,10 @@ def sell_stock():
 
     if not stock:
         return jsonify({"error": "Stock not found"}), 404
+
+    # Check if market is open
+    if not market_open:
+        return jsonify({"error": "Market is currently closed. Trading is not allowed."}), 400
 
     with user_lock:
         portfolio = user["portfolio"]
@@ -481,7 +497,7 @@ def sell_stock():
         })
 
         portfolio["total_value"] = calculate_portfolio_value(portfolio)
-        return jsonify({"success": True, "portfolio": portfolio})
+        return jsonify({"success": True, "portfolio": portfolio, "order_value": total_value})
 
 
 @app.route("/api/update_order_settings", methods=["POST"])
@@ -658,6 +674,7 @@ def get_admin_stats():
         "average_portfolio_value": round(average_portfolio_value, 2),
         "active_traders": active_traders,
         "total_trades": total_trades,
+        "market_open": market_open,
         "market_stats": {
             "total_market_cap": round(total_market_cap, 2),
             "biggest_gainer": {
@@ -682,6 +699,56 @@ def reset_competition():
         users.clear()
     
     return jsonify({"success": True, "message": "Competition reset successfully. All users cleared."})
+
+
+@app.route("/api/admin/market_control", methods=["POST"])
+def market_control():
+    """Control market open/close status (admin only)"""
+    if not is_admin():
+        return jsonify({"error": "Admin access required"}), 403
+    
+    data = request.json or {}
+    action = data.get("action")
+    
+    global market_open
+    
+    if action == "open":
+        market_open = True
+        return jsonify({"success": True, "message": "Market opened successfully", "market_open": True})
+    elif action == "close":
+        market_open = False
+        return jsonify({"success": True, "message": "Market closed successfully", "market_open": False})
+    else:
+        return jsonify({"error": "Invalid action. Use 'open' or 'close'"}), 400
+
+
+@app.route("/api/calculate_order_value", methods=["POST"])
+def calculate_order_value():
+    """Calculate order value for display before submitting order"""
+    data = request.json or {}
+    symbol = data.get("symbol")
+    shares = int(data.get("shares", 0))
+    action = data.get("action", "buy")  # "buy" or "sell"
+    
+    if not symbol or shares <= 0:
+        return jsonify({"error": "Invalid symbol or shares"}), 400
+    
+    with stock_lock:
+        stock = next((s for s in stocks if s["symbol"] == symbol), None)
+    
+    if not stock:
+        return jsonify({"error": "Stock not found"}), 404
+    
+    current_price = stock["price"]
+    total_value = shares * current_price
+    
+    return jsonify({
+        "symbol": symbol,
+        "shares": shares,
+        "price": current_price,
+        "total_value": round(total_value, 2),
+        "action": action
+    })
 
 
 # -----------------------------

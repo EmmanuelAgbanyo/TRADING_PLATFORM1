@@ -100,9 +100,103 @@
             color: white;
         }
 
+        .btn-success {
+            background: #2ecc71;
+            color: white;
+        }
+
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .timer-section {
+            background: white;
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .timer-display {
+            font-size: 4rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .timer-input {
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            text-align: center;
+            width: 80px;
+        }
+
+        .timer-status {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .timer-running {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .timer-paused {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .timer-finished {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .market-status {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .market-status-open {
+            border-left: 6px solid #2ecc71;
+        }
+
+        .market-status-closed {
+            border-left: 6px solid #e63946;
+        }
+
+        .market-status h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .market-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
         }
 
         .stats-grid {
@@ -182,6 +276,12 @@
         .rank-2 { background: #f0f8ff; }
         .rank-3 { background: #f0fff0; }
 
+        .disqualified { 
+            background: #f8d7da; 
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
         .positive { color: #2ecc71; font-weight: 600; }
         .negative { color: var(--danger); font-weight: 600; }
 
@@ -195,6 +295,7 @@
         .badge-success { background: #d4edda; color: #155724; }
         .badge-warning { background: #fff3cd; color: #856404; }
         .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-disqualified { background: #721c24; color: white; }
 
         .loading {
             text-align: center;
@@ -234,6 +335,19 @@
                 width: 100%;
                 justify-content: center;
             }
+
+            .timer-display {
+                font-size: 3rem;
+            }
+
+            .timer-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .market-controls {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -258,6 +372,48 @@
             </div>
         </header>
 
+        <!-- Timer Section -->
+        <section class="timer-section">
+            <h2 class="section-title">
+                <i class="fas fa-clock"></i> Competition Timer
+            </h2>
+            <div class="timer-display" id="timerDisplay">15:00</div>
+            <div class="timer-controls">
+                <input type="number" id="minutesInput" class="timer-input" value="15" min="1" max="60">
+                <span style="align-self: center;">minutes</span>
+                <button class="btn btn-success" onclick="setTimer()">
+                    <i class="fas fa-play"></i> Set Timer
+                </button>
+                <button class="btn btn-primary" onclick="startTimer()" id="startBtn">
+                    <i class="fas fa-play"></i> Start
+                </button>
+                <button class="btn btn-warning" onclick="pauseTimer()" id="pauseBtn">
+                    <i class="fas fa-pause"></i> Pause
+                </button>
+                <button class="btn btn-danger" onclick="resetTimer()">
+                    <i class="fas fa-stop"></i> Reset
+                </button>
+            </div>
+            <div class="timer-status" id="timerStatus">Ready to start</div>
+        </section>
+
+        <!-- Market Status Section -->
+        <section class="market-status" id="marketStatusSection">
+            <h3>
+                <i class="fas fa-chart-line"></i> Market Status: 
+                <span id="marketStatusText">Closed</span>
+            </h3>
+            <p id="marketStatusDescription">The market is currently closed. No trading is allowed.</p>
+            <div class="market-controls">
+                <button class="btn btn-success" onclick="openMarket()" id="openMarketBtn">
+                    <i class="fas fa-lock-open"></i> Open Market
+                </button>
+                <button class="btn btn-danger" onclick="closeMarket()" id="closeMarketBtn" disabled>
+                    <i class="fas fa-lock"></i> Close Market
+                </button>
+            </div>
+        </section>
+
         <!-- Statistics -->
         <div class="stats-grid" id="statsGrid">
             <div class="loading">
@@ -281,11 +437,13 @@
                             <th>Cash</th>
                             <th>Holdings</th>
                             <th>Trades</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="leaderboardTable">
                         <tr>
-                            <td colspan="7" class="loading">
+                            <td colspan="9" class="loading">
                                 <div class="spinner"></div>Loading leaderboard...
                             </td>
                         </tr>
@@ -310,11 +468,12 @@
                             <th>Holdings</th>
                             <th>Total Trades</th>
                             <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="usersTable">
                         <tr>
-                            <td colspan="7" class="loading">
+                            <td colspan="8" class="loading">
                                 <div class="spinner"></div>Loading users...
                             </td>
                         </tr>
@@ -325,6 +484,169 @@
     </div>
 
     <script>
+        // Timer functionality
+        let timerInterval;
+        let timeLeft = 15 * 60; // 15 minutes in seconds
+        let timerRunning = false;
+        let disqualifiedTraders = new Set();
+        let marketOpen = false;
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timerDisplay').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function setTimer() {
+            const minutes = parseInt(document.getElementById('minutesInput').value);
+            if (minutes > 0) {
+                timeLeft = minutes * 60;
+                updateTimerDisplay();
+                document.getElementById('timerStatus').textContent = `Timer set to ${minutes} minutes`;
+                document.getElementById('timerStatus').className = 'timer-status timer-paused';
+            }
+        }
+
+        function startTimer() {
+            if (!timerRunning && timeLeft > 0) {
+                timerRunning = true;
+                openMarket(); // Automatically open market when timer starts
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        timerRunning = false;
+                        closeMarket(); // Automatically close market when timer ends
+                        document.getElementById('timerStatus').textContent = '⏰ TIME\'S UP! Competition Ended';
+                        document.getElementById('timerStatus').className = 'timer-status timer-finished';
+                        // Play sound or show alert when time's up
+                        if ('Notification' in window && Notification.permission === 'granted') {
+                            new Notification('Competition Time Ended!');
+                        }
+                    }
+                }, 1000);
+                
+                document.getElementById('timerStatus').textContent = '⏱️ Competition Running...';
+                document.getElementById('timerStatus').className = 'timer-status timer-running';
+            }
+        }
+
+        function pauseTimer() {
+            if (timerRunning) {
+                clearInterval(timerInterval);
+                timerRunning = false;
+                closeMarket(); // Close market when timer is paused
+                document.getElementById('timerStatus').textContent = '⏸️ Competition Paused';
+                document.getElementById('timerStatus').className = 'timer-status timer-paused';
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            timeLeft = 15 * 60;
+            closeMarket(); // Ensure market is closed when timer is reset
+            updateTimerDisplay();
+            document.getElementById('timerStatus').textContent = 'Ready to start';
+            document.getElementById('timerStatus').className = 'timer-status';
+        }
+
+        // Market control functions
+        async function openMarket() {
+            try {
+                const response = await fetch('/api/admin/market_control', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ action: 'open' })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    marketOpen = true;
+                    updateMarketStatus();
+                    alert('✅ Market opened successfully! Trading is now allowed.');
+                } else {
+                    alert('❌ Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('❌ Network error. Please try again.');
+            }
+        }
+
+        async function closeMarket() {
+            try {
+                const response = await fetch('/api/admin/market_control', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ action: 'close' })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    marketOpen = false;
+                    updateMarketStatus();
+                    alert('✅ Market closed successfully! Trading is now suspended.');
+                } else {
+                    alert('❌ Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('❌ Network error. Please try again.');
+            }
+        }
+
+        function updateMarketStatus() {
+            const marketStatusSection = document.getElementById('marketStatusSection');
+            const marketStatusText = document.getElementById('marketStatusText');
+            const marketStatusDescription = document.getElementById('marketStatusDescription');
+            const openMarketBtn = document.getElementById('openMarketBtn');
+            const closeMarketBtn = document.getElementById('closeMarketBtn');
+
+            if (marketOpen) {
+                marketStatusSection.className = 'market-status market-status-open';
+                marketStatusText.textContent = 'OPEN';
+                marketStatusText.style.color = '#2ecc71';
+                marketStatusDescription.textContent = 'The market is currently open. Trading is allowed.';
+                openMarketBtn.disabled = true;
+                closeMarketBtn.disabled = false;
+            } else {
+                marketStatusSection.className = 'market-status market-status-closed';
+                marketStatusText.textContent = 'CLOSED';
+                marketStatusText.style.color = '#e63946';
+                marketStatusDescription.textContent = 'The market is currently closed. No trading is allowed.';
+                openMarketBtn.disabled = false;
+                closeMarketBtn.disabled = true;
+            }
+        }
+
+        // Disqualify trader function
+        function disqualifyTrader(username) {
+            if (confirm(`Are you sure you want to disqualify ${username}?`)) {
+                disqualifiedTraders.add(username);
+                loadLeaderboard();
+                loadUsers();
+                alert(`${username} has been disqualified from the competition.`);
+            }
+        }
+
+        // Reinstate trader function
+        function reinstateTrader(username) {
+            if (confirm(`Are you sure you want to reinstate ${username}?`)) {
+                disqualifiedTraders.delete(username);
+                loadLeaderboard();
+                loadUsers();
+                alert(`${username} has been reinstated to the competition.`);
+            }
+        }
+
         // Load all admin data
         async function loadAdminData() {
             await Promise.all([
@@ -353,8 +675,9 @@
                 const result = await response.json();
                 
                 if (response.ok) {
+                    disqualifiedTraders.clear();
+                    resetTimer();
                     alert('✅ Competition reset successfully!\n\nAll users have been cleared. New traders can now register.');
-                    // Reload the page to show empty state
                     location.reload();
                 } else {
                     alert('❌ Error: ' + result.error);
@@ -373,6 +696,10 @@
             try {
                 const response = await fetch('/api/admin/stats');
                 const stats = await response.json();
+                
+                // Update market status from server
+                marketOpen = stats.market_open;
+                updateMarketStatus();
                 
                 const statsGrid = document.getElementById('statsGrid');
                 statsGrid.innerHTML = `
@@ -416,10 +743,14 @@
                 const leaderboardTable = document.getElementById('leaderboardTable');
                 leaderboardTable.innerHTML = '';
                 
-                leaderboard.forEach(trader => {
+                // Filter out disqualified traders and sort
+                const qualifiedTraders = leaderboard.filter(trader => !disqualifiedTraders.has(trader.username));
+                qualifiedTraders.sort((a, b) => b.portfolio_value - a.portfolio_value);
+                
+                qualifiedTraders.forEach((trader, index) => {
                     const row = document.createElement('tr');
-                    if (trader.rank <= 3) {
-                        row.className = `rank-${trader.rank}`;
+                    if (index < 3) {
+                        row.className = `rank-${index + 1}`;
                     }
                     
                     const growthClass = trader.growth_percent >= 0 ? 'positive' : 'negative';
@@ -427,8 +758,8 @@
                     
                     row.innerHTML = `
                         <td>
-                            <strong>#${trader.rank}</strong>
-                            ${trader.rank === 1 ? '🥇' : trader.rank === 2 ? '🥈' : trader.rank === 3 ? '🥉' : ''}
+                            <strong>#${index + 1}</strong>
+                            ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : ''}
                         </td>
                         <td><strong>${trader.username}</strong></td>
                         <td>₵${trader.portfolio_value.toLocaleString()}</td>
@@ -436,13 +767,19 @@
                         <td>₵${trader.cash.toLocaleString()}</td>
                         <td>${trader.holdings_count}</td>
                         <td>${trader.total_trades}</td>
+                        <td><span class="badge badge-success">Active</span></td>
+                        <td>
+                            <button class="btn btn-danger" onclick="disqualifyTrader('${trader.username}')" style="padding: 6px 12px; font-size: 0.8rem;">
+                                <i class="fas fa-ban"></i> DQ
+                            </button>
+                        </td>
                     `;
                     
                     leaderboardTable.appendChild(row);
                 });
             } catch (error) {
                 console.error('Error loading leaderboard:', error);
-                document.getElementById('leaderboardTable').innerHTML = '<tr><td colspan="7">Error loading leaderboard</td></tr>';
+                document.getElementById('leaderboardTable').innerHTML = '<tr><td colspan="9">Error loading leaderboard</td></tr>';
             }
         }
 
@@ -457,11 +794,16 @@
                 
                 users.forEach(user => {
                     const row = document.createElement('tr');
+                    const isDisqualified = disqualifiedTraders.has(user.username);
+                    
+                    if (isDisqualified) {
+                        row.className = 'disqualified';
+                    }
                     
                     const growthClass = user.growth_percent >= 0 ? 'positive' : 'negative';
                     const growthSign = user.growth_percent >= 0 ? '+' : '';
-                    const status = user.holdings_count > 0 ? 'Active' : 'Inactive';
-                    const statusClass = user.holdings_count > 0 ? 'badge-success' : 'badge-warning';
+                    const status = isDisqualified ? 'Disqualified' : (user.holdings_count > 0 ? 'Active' : 'Inactive');
+                    const statusClass = isDisqualified ? 'badge-disqualified' : (user.holdings_count > 0 ? 'badge-success' : 'badge-warning');
                     
                     row.innerHTML = `
                         <td><strong>${user.username}</strong></td>
@@ -471,21 +813,39 @@
                         <td>${user.holdings_count}</td>
                         <td>${user.total_trades}</td>
                         <td><span class="badge ${statusClass}">${status}</span></td>
+                        <td>
+                            ${isDisqualified ? 
+                                `<button class="btn btn-success" onclick="reinstateTrader('${user.username}')" style="padding: 6px 12px; font-size: 0.8rem;">
+                                    <i class="fas fa-check"></i> Reinstate
+                                </button>` :
+                                `<button class="btn btn-danger" onclick="disqualifyTrader('${user.username}')" style="padding: 6px 12px; font-size: 0.8rem;">
+                                    <i class="fas fa-ban"></i> DQ
+                                </button>`
+                            }
+                        </td>
                     `;
                     
                     usersTable.appendChild(row);
                 });
             } catch (error) {
                 console.error('Error loading users:', error);
-                document.getElementById('usersTable').innerHTML = '<tr><td colspan="7">Error loading users</td></tr>';
+                document.getElementById('usersTable').innerHTML = '<tr><td colspan="8">Error loading users</td></tr>';
             }
+        }
+
+        // Request notification permission
+        if ('Notification' in window) {
+            Notification.requestPermission();
         }
 
         // Auto-refresh data every 5 seconds
         setInterval(loadAdminData, 5000);
 
         // Initial load
-        document.addEventListener('DOMContentLoaded', loadAdminData);
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAdminData();
+            updateTimerDisplay();
+        });
     </script>
 </body>
 </html>
