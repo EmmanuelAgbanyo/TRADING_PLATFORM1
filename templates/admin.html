@@ -1,851 +1,2325 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - GSE TradeSim Competition</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YIN — Admin Control Panel</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      :root {
+        --navy: #1a2366;
+        --navy-dark: #0d1433;
+        --navy-mid: #111848;
+        --sky: #2e9fd4;
+        --sky-light: #4db8ed;
+        --red: #e63329;
+        --green: #22c55e;
+        --amber: #f59e0b;
+        --white: #ffffff;
+        --gray: #8898aa;
+        --gray-light: #b0bec5;
+        --card: rgba(255, 255, 255, 0.04);
+        --card-hover: rgba(255, 255, 255, 0.07);
+        --border: rgba(46, 159, 212, 0.15);
+        --border-strong: rgba(46, 159, 212, 0.3);
+        --sidebar-w: 250px;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        font-family: "Barlow", sans-serif;
+        background: var(--navy-dark);
+        color: var(--white);
+        display: flex;
+      }
+
+      /* SIDEBAR */
+      .sidebar {
+        width: var(--sidebar-w);
+        flex-shrink: 0;
+        background: var(--navy-mid);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
+      }
+      .sidebar::-webkit-scrollbar {
+        width: 3px;
+      }
+      .sidebar::-webkit-scrollbar-thumb {
+        background: var(--border);
+      }
+      .sb-logo {
+        padding: 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .sb-logo img {
+        height: 38px;
+        filter: brightness(0) invert(1);
+      }
+      .admin-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(230, 51, 41, 0.12);
+        border: 1px solid rgba(230, 51, 41, 0.25);
+        border-radius: 5px;
+        padding: 4px 10px;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--red);
+      }
+
+      .sb-market {
+        margin: 12px;
+        border-radius: 12px;
+        padding: 14px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .sb-market-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--gray);
+        margin-bottom: 8px;
+      }
+      .sb-mkt-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .mkt-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--red);
+        animation: blink 1.5s infinite;
+        flex-shrink: 0;
+      }
+      .mkt-dot.open {
+        background: var(--green);
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
         }
-
-        :root {
-            --primary: #4361ee;
-            --primary-dark: #3a56d4;
-            --secondary: #7209b7;
-            --success: #4cc9f0;
-            --danger: #e63946;
-            --warning: #ff9e00;
-            --text: #2b2d42;
-            --text-light: #8d99ae;
-            --background: #f8f9fa;
-            --card-bg: #ffffff;
-            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            --radius: 16px;
+        50% {
+          opacity: 0.2;
         }
+      }
+      .mkt-status-text {
+        font-size: 14px;
+        font-weight: 800;
+      }
+      .mkt-status-text.open {
+        color: var(--green);
+      }
+      .mkt-status-text.closed {
+        color: var(--red);
+      }
+      .sb-mkt-btns {
+        display: flex;
+        gap: 6px;
+      }
+      .mkt-btn {
+        flex: 1;
+        padding: 8px 4px;
+        border-radius: 7px;
+        border: none;
+        font-family: "Barlow", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .mkt-btn-open {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--green);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+      }
+      .mkt-btn-open:hover {
+        background: rgba(34, 197, 94, 0.28);
+      }
+      .mkt-btn-close {
+        background: rgba(230, 51, 41, 0.15);
+        color: var(--red);
+        border: 1px solid rgba(230, 51, 41, 0.3);
+      }
+      .mkt-btn-close:hover {
+        background: rgba(230, 51, 41, 0.28);
+      }
 
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: var(--text);
+      .nav-section {
+        padding: 8px 12px;
+      }
+      .nav-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--gray);
+        padding: 0 8px;
+        margin-bottom: 4px;
+        margin-top: 8px;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--gray-light);
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 2px;
+        border: 1px solid transparent;
+      }
+      .nav-item:hover {
+        background: var(--card);
+        color: var(--white);
+      }
+      .nav-item.active {
+        background: rgba(46, 159, 212, 0.12);
+        border-color: rgba(46, 159, 212, 0.2);
+        color: var(--sky);
+      }
+      .nav-item .icon {
+        font-size: 15px;
+        width: 20px;
+        text-align: center;
+      }
+      .nav-badge {
+        margin-left: auto;
+        background: var(--red);
+        border-radius: 100px;
+        padding: 1px 6px;
+        font-size: 9px;
+        font-weight: 800;
+        color: white;
+      }
+
+      .sb-bottom {
+        margin-top: auto;
+        padding: 14px;
+        border-top: 1px solid var(--border);
+      }
+      .sb-admin-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .sb-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 7px;
+        background: rgba(230, 51, 41, 0.2);
+        border: 1px solid rgba(230, 51, 41, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+      }
+      .sb-name {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--white);
+      }
+      .sb-role {
+        font-size: 10px;
+        color: var(--red);
+      }
+      .logout-btn {
+        display: block;
+        width: 100%;
+        padding: 9px;
+        text-align: center;
+        background: rgba(230, 51, 41, 0.1);
+        border: 1px solid rgba(230, 51, 41, 0.2);
+        border-radius: 8px;
+        color: var(--red);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 700;
+        transition: all 0.2s;
+      }
+      .logout-btn:hover {
+        background: rgba(230, 51, 41, 0.2);
+      }
+
+      /* MAIN */
+      .main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+      }
+      .topbar {
+        height: 58px;
+        background: var(--navy-mid);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        gap: 14px;
+        flex-shrink: 0;
+      }
+      .topbar-title {
+        font-family: "Barlow Condensed", sans-serif;
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--white);
+      }
+      .topbar-title span {
+        color: var(--sky);
+      }
+      .topbar-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .tb-mkt-chip {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 6px 13px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .tb-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--red);
+        animation: blink 1.5s infinite;
+      }
+      .tb-dot.open {
+        background: var(--green);
+      }
+      .tb-toggle {
+        padding: 4px 10px;
+        border-radius: 5px;
+        border: none;
+        font-family: "Barlow", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-left: 4px;
+      }
+      .btn-refresh {
+        padding: 7px 13px;
+        background: rgba(46, 159, 212, 0.1);
+        border: 1px solid rgba(46, 159, 212, 0.2);
+        border-radius: 7px;
+        color: var(--sky);
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-refresh:hover {
+        background: rgba(46, 159, 212, 0.2);
+      }
+
+      .content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 24px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
+      }
+      .content::-webkit-scrollbar {
+        width: 4px;
+      }
+      .content::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 2px;
+      }
+      .view {
+        display: none;
+      }
+      .view.active {
+        display: block;
+      }
+
+      /* STATS */
+      .stats-row {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .stat-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 15px 17px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.2s;
+      }
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--sky), transparent);
+      }
+      .stat-label {
+        font-size: 10px;
+        color: var(--gray);
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 7px;
+      }
+      .stat-value {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--white);
+      }
+      .stat-sub {
+        font-size: 11px;
+        color: var(--gray);
+        margin-top: 4px;
+      }
+      .stat-icon {
+        position: absolute;
+        right: 14px;
+        top: 14px;
+        font-size: 20px;
+        opacity: 0.3;
+      }
+
+      /* PANELS */
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        margin-bottom: 16px;
+      }
+      .panel-header {
+        padding: 13px 18px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .panel-title {
+        font-family: "Barlow Condensed", sans-serif;
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--white);
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      .panel-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      /* TABLES */
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .data-table th {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--gray);
+        padding: 10px 14px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+      }
+      .data-table td {
+        padding: 11px 14px;
+        font-size: 13px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        vertical-align: middle;
+      }
+      .data-table tr:last-child td {
+        border-bottom: none;
+      }
+      .data-table tr:hover td {
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      .table-wrap::-webkit-scrollbar {
+        height: 3px;
+      }
+      .table-wrap::-webkit-scrollbar-thumb {
+        background: var(--border);
+      }
+
+      .rank-badge {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 800;
+      }
+      .rank-1 {
+        background: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+      }
+      .rank-2 {
+        background: rgba(148, 163, 184, 0.1);
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+      }
+      .rank-3 {
+        background: rgba(180, 83, 9, 0.1);
+        color: #b45309;
+        border: 1px solid rgba(180, 83, 9, 0.2);
+      }
+      .rank-other {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--gray);
+      }
+      .pct-pos {
+        color: var(--green);
+        font-weight: 700;
+      }
+      .pct-neg {
+        color: var(--red);
+        font-weight: 700;
+      }
+      .progress-bar-wrap {
+        width: 90px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .progress-bar-fill {
+        height: 100%;
+        border-radius: 2px;
+        background: linear-gradient(90deg, var(--sky), var(--sky-light));
+        transition: width 0.5s;
+      }
+
+      /* BUTTONS */
+      .btn-sm {
+        padding: 5px 11px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+      }
+      .btn-view {
+        background: rgba(46, 159, 212, 0.1);
+        color: var(--sky);
+        border-color: rgba(46, 159, 212, 0.2);
+      }
+      .btn-view:hover {
+        background: rgba(46, 159, 212, 0.22);
+      }
+      .btn-reset-user {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--amber);
+        border-color: rgba(245, 158, 11, 0.2);
+      }
+      .btn-reset-user:hover {
+        background: rgba(245, 158, 11, 0.22);
+      }
+      .btn-delete {
+        background: rgba(230, 51, 41, 0.1);
+        color: var(--red);
+        border-color: rgba(230, 51, 41, 0.2);
+      }
+      .btn-delete:hover {
+        background: rgba(230, 51, 41, 0.22);
+      }
+      .btn-danger-full {
+        padding: 10px 18px;
+        background: rgba(230, 51, 41, 0.1);
+        border: 1px solid rgba(230, 51, 41, 0.3);
+        border-radius: 8px;
+        color: var(--red);
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-danger-full:hover {
+        background: rgba(230, 51, 41, 0.22);
+      }
+      .btn-primary {
+        padding: 10px 18px;
+        background: linear-gradient(135deg, var(--sky), #1a7ab5);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(46, 159, 212, 0.3);
+      }
+      .search-bar {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 12px;
+        color: var(--white);
+        font-family: "Barlow", sans-serif;
+        font-size: 12px;
+        outline: none;
+        transition: all 0.2s;
+        width: 200px;
+      }
+      .search-bar:focus {
+        border-color: var(--sky);
+        background: rgba(46, 159, 212, 0.08);
+      }
+      .search-bar::placeholder {
+        color: rgba(255, 255, 255, 0.2);
+      }
+      .user-count-badge {
+        background: rgba(46, 159, 212, 0.1);
+        border: 1px solid rgba(46, 159, 212, 0.2);
+        border-radius: 6px;
+        padding: 3px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--sky);
+        white-space: nowrap;
+      }
+
+      /* GRIDS */
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      /* CONTROL CARDS */
+      .control-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 24px;
+        margin-bottom: 16px;
+      }
+      .control-card-title {
+        font-family: "Barlow Condensed", sans-serif;
+        font-size: 17px;
+        font-weight: 800;
+        color: var(--white);
+        margin-bottom: 6px;
+      }
+      .control-card-desc {
+        font-size: 13px;
+        color: var(--gray);
+        margin-bottom: 20px;
+        line-height: 1.6;
+      }
+      .status-box {
+        padding: 14px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        margin-bottom: 16px;
+      }
+      .status-box-label {
+        font-size: 10px;
+        color: var(--gray);
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+      }
+      .status-box-value {
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      /* STOCK ADJUST */
+      .sa-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      }
+      .sa-row:last-child {
+        border-bottom: none;
+      }
+      .sa-sym {
+        font-weight: 800;
+        color: var(--sky);
+        width: 72px;
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+      .sa-name {
+        color: var(--gray-light);
+        font-size: 12px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .sa-price {
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 700;
+        width: 90px;
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+      .sa-input {
+        width: 100px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 6px 10px;
+        color: var(--white);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        outline: none;
+        transition: all 0.2s;
+        flex-shrink: 0;
+      }
+      .sa-input:focus {
+        border-color: var(--sky);
+        background: rgba(46, 159, 212, 0.08);
+      }
+      .sa-input::placeholder {
+        color: rgba(255, 255, 255, 0.2);
+      }
+
+      /* ACTIVITY LOG */
+      .log-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      }
+      .log-item:last-child {
+        border-bottom: none;
+      }
+      .log-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+      .log-icon.market {
+        background: rgba(34, 197, 94, 0.1);
+      }
+      .log-icon.user {
+        background: rgba(46, 159, 212, 0.1);
+      }
+      .log-icon.danger {
+        background: rgba(230, 51, 41, 0.1);
+      }
+      .log-icon.stock {
+        background: rgba(245, 158, 11, 0.1);
+      }
+      .log-msg {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--white);
+      }
+      .log-time {
+        font-size: 10px;
+        color: var(--gray);
+        margin-top: 2px;
+      }
+
+      /* MODALS */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+      }
+      .modal-overlay.open {
+        display: flex;
+      }
+      .modal {
+        background: var(--navy-mid);
+        border: 1px solid var(--border-strong);
+        border-radius: 16px;
+        width: 500px;
+        max-width: 95vw;
+        max-height: 88vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        animation: modalIn 0.2s ease;
+      }
+      .modal.wide {
+        width: 740px;
+      }
+      @keyframes modalIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95) translateY(10px);
         }
-
-        .admin-container {
-            max-width: 1400px;
-            margin: 0 auto;
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
         }
+      }
+      .modal-header {
+        padding: 18px 22px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+      .modal-title {
+        font-family: "Barlow Condensed", sans-serif;
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--white);
+      }
+      .modal-close {
+        background: rgba(255, 255, 255, 0.05);
+        border: none;
+        border-radius: 6px;
+        width: 28px;
+        height: 28px;
+        color: var(--gray);
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+      .modal-close:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--white);
+      }
+      .modal-body {
+        padding: 20px 22px;
+        overflow-y: auto;
+        flex: 1;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
+      }
+      .modal-footer {
+        padding: 14px 22px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        flex-shrink: 0;
+      }
 
-        .admin-header {
-            background: white;
-            border-radius: var(--radius);
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+      .confirm-icon {
+        text-align: center;
+        font-size: 44px;
+        margin-bottom: 12px;
+      }
+      .confirm-title {
+        text-align: center;
+        font-size: 17px;
+        font-weight: 800;
+        color: var(--white);
+        margin-bottom: 8px;
+      }
+      .confirm-desc {
+        text-align: center;
+        font-size: 13px;
+        color: var(--gray-light);
+        margin-bottom: 12px;
+        line-height: 1.6;
+      }
+      .confirm-warn {
+        text-align: center;
+        font-size: 12px;
+        color: var(--red);
+        background: rgba(230, 51, 41, 0.08);
+        border: 1px solid rgba(230, 51, 41, 0.2);
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 10px;
+      }
+      .confirm-warn-amber {
+        color: #78350f;
+        background: rgba(245, 158, 11, 0.08);
+        border-color: rgba(245, 158, 11, 0.2);
+      }
 
-        .admin-title h1 {
-            color: var(--primary);
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-        }
+      /* USER DETAIL MODAL */
+      .ud-header-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        margin-bottom: 16px;
+      }
+      .ud-avatar {
+        width: 46px;
+        height: 46px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--sky), var(--navy));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        font-weight: 800;
+        color: white;
+        flex-shrink: 0;
+      }
+      .ud-username {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--white);
+      }
+      .ud-tags {
+        display: flex;
+        gap: 7px;
+        margin-top: 5px;
+        flex-wrap: wrap;
+      }
+      .ud-tag {
+        font-size: 11px;
+        color: var(--gray);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 2px 9px;
+      }
+      .ud-tag span {
+        color: var(--sky);
+        font-weight: 700;
+      }
+      .ud-sec {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--sky);
+        margin: 14px 0 8px;
+      }
+      .mini-tbl {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+      .mini-tbl th {
+        color: var(--gray);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 7px 10px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+      }
+      .mini-tbl td {
+        padding: 8px 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        color: var(--gray-light);
+      }
+      .mini-tbl tr:last-child td {
+        border-bottom: none;
+      }
+      .mini-tbl td:first-child {
+        color: var(--sky);
+        font-weight: 700;
+      }
 
-        .admin-title p {
-            color: var(--text-light);
-            font-size: 1.1rem;
-        }
-
-        .admin-actions {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-secondary {
-            background: var(--text-light);
-            color: white;
-        }
-
-        .btn-warning {
-            background: var(--warning);
-            color: white;
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn-success {
-            background: #2ecc71;
-            color: white;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .timer-section {
-            background: white;
-            border-radius: var(--radius);
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow);
-            text-align: center;
-        }
-
-        .timer-display {
-            font-size: 4rem;
-            font-weight: bold;
-            color: var(--primary);
-            margin: 1rem 0;
-            font-family: 'Courier New', monospace;
-        }
-
-        .timer-controls {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 1rem;
-        }
-
-        .timer-input {
-            padding: 10px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 1rem;
-            text-align: center;
-            width: 80px;
-        }
-
-        .timer-status {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-top: 1rem;
-            padding: 10px;
-            border-radius: 8px;
-        }
-
-        .timer-running {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .timer-paused {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .timer-finished {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .market-status {
-            background: white;
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow);
-            text-align: center;
-        }
-
-        .market-status-open {
-            border-left: 6px solid #2ecc71;
-        }
-
-        .market-status-closed {
-            border-left: 6px solid #e63946;
-        }
-
-        .market-status h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .market-controls {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 1rem;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            color: var(--text-light);
-            font-size: 1rem;
-        }
-
-        .leaderboard-section {
-            background: white;
-            border-radius: var(--radius);
-            padding: 2rem;
-            box-shadow: var(--shadow);
-            margin-bottom: 2rem;
-        }
-
-        .section-title {
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
-            color: var(--text);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .table-container {
-            overflow-x: auto;
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: var(--text);
-            position: sticky;
-            top: 0;
-        }
-
-        tr:hover {
-            background: #f8f9fa;
-        }
-
-        .rank-1 { background: #fff9e6; }
-        .rank-2 { background: #f0f8ff; }
-        .rank-3 { background: #f0fff0; }
-
-        .disqualified { 
-            background: #f8d7da; 
-            text-decoration: line-through;
-            opacity: 0.6;
-        }
-
-        .positive { color: #2ecc71; font-weight: 600; }
-        .negative { color: var(--danger); font-weight: 600; }
-
-        .badge {
-            padding: 4px 8px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .badge-success { background: #d4edda; color: #155724; }
-        .badge-warning { background: #fff3cd; color: #856404; }
-        .badge-danger { background: #f8d7da; color: #721c24; }
-        .badge-disqualified { background: #721c24; color: white; }
-
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-light);
-        }
-
-        .spinner {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid var(--primary);
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-right: 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 768px) {
-            .admin-header {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-            
-            .admin-actions {
-                flex-direction: column;
-                width: 100%;
-            }
-            
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .timer-display {
-                font-size: 3rem;
-            }
-
-            .timer-controls {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .market-controls {
-                flex-direction: column;
-            }
-        }
+      /* TOAST */
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        background: var(--navy-mid);
+        border: 1px solid var(--border-strong);
+        border-radius: 12px;
+        padding: 13px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--white);
+        transform: translateY(80px);
+        opacity: 0;
+        transition: all 0.3s;
+        max-width: 340px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      }
+      .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      .toast.success {
+        border-left: 3px solid var(--green);
+      }
+      .toast.error {
+        border-left: 3px solid var(--red);
+      }
+      .toast.info {
+        border-left: 3px solid var(--sky);
+      }
+      .toast.warning {
+        border-left: 3px solid var(--amber);
+      }
     </style>
-</head>
-<body>
-    <div class="admin-container">
-        <!-- Header -->
-        <header class="admin-header">
-            <div class="admin-title">
-                <h1>🏆 Stock Simulation Dashboard</h1>
-                <p>Real-time monitoring of all traders and portfolio performance</p>
-            </div>
-            <div class="admin-actions">
-                <a href="/" class="btn btn-secondary">
-                    <i class="fas fa-home"></i> Main App
-                </a>
-                <button class="btn btn-warning" onclick="resetCompetition()" id="resetBtn">
-                    <i class="fas fa-redo"></i> Reset Competition
-                </button>
-                <a href="/logout" class="btn btn-danger">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
-            </div>
-        </header>
+  </head>
+  <body>
+    <!-- ════════════ SIDEBAR ════════════ -->
+    <aside class="sidebar">
+      <div class="sb-logo">
+        <img
+          src="{{ url_for('static', filename='logo.png') }}"
+          alt="YIN"
+          onerror="
+            this.style.display = 'none';
+            document.getElementById('adm-fb').style.display = 'block';
+          "
+        />
+        <div
+          id="adm-fb"
+          style="
+            display: none;
+            font-family: &quot;Barlow Condensed&quot;, sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: white;
+          "
+        >
+          <span style="color: #2e9fd4">Y</span>IN
+        </div>
+        <span class="admin-badge">⚙ Admin Panel</span>
+      </div>
 
-        <!-- Timer Section -->
-        <section class="timer-section">
-            <h2 class="section-title">
-                <i class="fas fa-clock"></i> Competition Timer
-            </h2>
-            <div class="timer-display" id="timerDisplay">15:00</div>
-            <div class="timer-controls">
-                <input type="number" id="minutesInput" class="timer-input" value="15" min="1" max="60">
-                <span style="align-self: center;">minutes</span>
-                <button class="btn btn-success" onclick="setTimer()">
-                    <i class="fas fa-play"></i> Set Timer
-                </button>
-                <button class="btn btn-primary" onclick="startTimer()" id="startBtn">
-                    <i class="fas fa-play"></i> Start
-                </button>
-                <button class="btn btn-warning" onclick="pauseTimer()" id="pauseBtn">
-                    <i class="fas fa-pause"></i> Pause
-                </button>
-                <button class="btn btn-danger" onclick="resetTimer()">
-                    <i class="fas fa-stop"></i> Reset
-                </button>
-            </div>
-            <div class="timer-status" id="timerStatus">Ready to start</div>
-        </section>
+      <!-- ALWAYS-VISIBLE MARKET TOGGLE -->
+      <div class="sb-market">
+        <div class="sb-market-label">Market Control</div>
+        <div class="sb-mkt-row">
+          <div class="mkt-dot" id="sb-dot"></div>
+          <div class="mkt-status-text closed" id="sb-mkt-label">Closed</div>
+        </div>
+        <div class="sb-mkt-btns">
+          <button class="mkt-btn mkt-btn-open" onclick="setMarket('open')">
+            ▶ Open
+          </button>
+          <button class="mkt-btn mkt-btn-close" onclick="setMarket('close')">
+            ■ Close
+          </button>
+        </div>
+      </div>
 
-        <!-- Market Status Section -->
-        <section class="market-status" id="marketStatusSection">
-            <h3>
-                <i class="fas fa-chart-line"></i> Market Status: 
-                <span id="marketStatusText">Closed</span>
-            </h3>
-            <p id="marketStatusDescription">The market is currently closed. No trading is allowed.</p>
-            <div class="market-controls">
-                <button class="btn btn-success" onclick="openMarket()" id="openMarketBtn">
-                    <i class="fas fa-lock-open"></i> Open Market
-                </button>
-                <button class="btn btn-danger" onclick="closeMarket()" id="closeMarketBtn" disabled>
-                    <i class="fas fa-lock"></i> Close Market
-                </button>
-            </div>
-        </section>
+      <div class="nav-section">
+        <div class="nav-label">Dashboard</div>
+        <div class="nav-item active" onclick="showView('overview')">
+          <span class="icon">📊</span>Overview
+        </div>
+        <div class="nav-item" onclick="showView('leaderboard')">
+          <span class="icon">🏆</span>Leaderboard
+        </div>
+        <div class="nav-item" onclick="showView('users')">
+          <span class="icon">👥</span>Users
+          <span class="nav-badge" id="user-nav-badge" style="display: none"
+            >0</span
+          >
+        </div>
+        <div class="nav-item" onclick="showView('stocks')">
+          <span class="icon">📈</span>Market Data
+        </div>
+        <div class="nav-label">Controls</div>
+        <div class="nav-item" onclick="showView('price-control')">
+          <span class="icon">⚡</span>Price Control
+        </div>
+        <div class="nav-item" onclick="showView('competition')">
+          <span class="icon">🎯</span>Competition
+        </div>
+        <div class="nav-item" onclick="showView('activity')">
+          <span class="icon">📝</span>Activity Log
+        </div>
+      </div>
 
-        <!-- Statistics -->
-        <div class="stats-grid" id="statsGrid">
-            <div class="loading">
-                <div class="spinner"></div>Loading statistics...
+      <div class="sb-bottom">
+        <div class="sb-admin-row">
+          <div class="sb-avatar">👑</div>
+          <div>
+            <div class="sb-name">Administrator</div>
+            <div class="sb-role">Full Access</div>
+          </div>
+        </div>
+        <a href="/logout" class="logout-btn">← Logout</a>
+      </div>
+    </aside>
+
+    <!-- ════════════ MAIN ════════════ -->
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title" id="topbar-title">
+          Admin <span>Overview</span>
+        </div>
+        <div class="topbar-right">
+          <div class="tb-mkt-chip">
+            <div class="tb-dot" id="tb-dot"></div>
+            <span style="color: var(--gray)">Market:</span>
+            <strong id="tb-mkt-val" style="color: var(--red)">Closed</strong>
+            <button
+              class="tb-toggle mkt-btn-open"
+              id="tb-toggle-btn"
+              onclick="toggleMarket()"
+            >
+              Open
+            </button>
+          </div>
+          <button class="btn-refresh" onclick="loadAll()">↻ Refresh</button>
+        </div>
+      </div>
+
+      <div class="content">
+        <!-- OVERVIEW -->
+        <div class="view active" id="view-overview">
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-label">Total Users</div>
+              <div class="stat-value" id="stat-users">—</div>
+              <div class="stat-sub">registered traders</div>
+              <div class="stat-icon">👥</div>
             </div>
+            <div class="stat-card">
+              <div class="stat-label">Active Traders</div>
+              <div class="stat-value" id="stat-active">—</div>
+              <div class="stat-sub">holding positions</div>
+              <div class="stat-icon">📊</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Total Trades</div>
+              <div class="stat-value" id="stat-trades">—</div>
+              <div class="stat-sub">all time</div>
+              <div class="stat-icon">⚡</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Avg Portfolio</div>
+              <div class="stat-value" id="stat-avg">—</div>
+              <div class="stat-sub">per trader</div>
+              <div class="stat-icon">💼</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Market</div>
+              <div
+                class="stat-value"
+                id="stat-market"
+                style="color: var(--red)"
+              >
+                Closed
+              </div>
+              <div class="stat-sub">GSE Simulated</div>
+              <div class="stat-icon">🏛</div>
+            </div>
+          </div>
+          <div class="two-col">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">🏆 Top 5 Performers</div>
+              </div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Trader</th>
+                      <th>Value</th>
+                      <th>Growth</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="top-performers-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">📈 Highest Priced Stocks</div>
+              </div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Symbol</th>
+                      <th>Name</th>
+                      <th>Price (GHS)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="movers-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Leaderboard -->
-        <section class="leaderboard-section">
-            <h2 class="section-title">
-                <i class="fas fa-trophy"></i> Competition Leaderboard
-            </h2>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Trader</th>
-                            <th>Portfolio Value</th>
-                            <th>Growth</th>
-                            <th>Cash</th>
-                            <th>Holdings</th>
-                            <th>Trades</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboardTable">
-                        <tr>
-                            <td colspan="9" class="loading">
-                                <div class="spinner"></div>Loading leaderboard...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <!-- LEADERBOARD -->
+        <div class="view" id="view-leaderboard">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">🏆 Competition Leaderboard</div>
+              <div class="panel-actions">
+                <span class="user-count-badge" id="lb-count">0 traders</span
+                ><button class="btn-refresh" onclick="loadLeaderboard()">
+                  ↻
+                </button>
+              </div>
             </div>
-        </section>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Trader</th>
+                    <th>Portfolio Value</th>
+                    <th>Growth</th>
+                    <th>Cash</th>
+                    <th>Holdings</th>
+                    <th>Trades</th>
+                    <th>Performance</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboard-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
 
-        <!-- Users List -->
-        <section class="leaderboard-section">
-            <h2 class="section-title">
-                <i class="fas fa-users"></i> All Traders
-            </h2>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Username</th>
-                            <th>Portfolio Value</th>
-                            <th>Growth</th>
-                            <th>Cash</th>
-                            <th>Holdings</th>
-                            <th>Total Trades</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="usersTable">
-                        <tr>
-                            <td colspan="8" class="loading">
-                                <div class="spinner"></div>Loading users...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <!-- USERS -->
+        <div class="view" id="view-users">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">👥 User Management</div>
+              <div class="panel-actions">
+                <input
+                  class="search-bar"
+                  type="text"
+                  placeholder="Search users..."
+                  id="user-search"
+                  oninput="filterUsers()"
+                />
+                <span class="user-count-badge" id="users-count">0 users</span>
+              </div>
             </div>
-        </section>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Portfolio Value</th>
+                    <th>Growth</th>
+                    <th>Cash</th>
+                    <th>Holdings</th>
+                    <th>Trades</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="users-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- MARKET DATA -->
+        <div class="view" id="view-stocks">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">📈 Live Market Data</div>
+              <button class="btn-refresh" onclick="loadStocks()">
+                ↻ Refresh
+              </button>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Symbol</th>
+                    <th>Name</th>
+                    <th>Sector</th>
+                    <th>Price (GHS)</th>
+                    <th>History</th>
+                  </tr>
+                </thead>
+                <tbody id="stocks-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- PRICE CONTROL -->
+        <div class="view" id="view-price-control">
+          <div class="control-card">
+            <div class="control-card-title">⚡ Manual Price Control</div>
+            <div class="control-card-desc">
+              Override any stock price to simulate real market events — earnings
+              releases, sector news, economic shocks. Enter a new price and
+              click Apply. Changes take effect immediately for all traders.
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Adjust Stock Prices</div>
+                <input
+                  class="search-bar"
+                  type="text"
+                  placeholder="Filter stocks..."
+                  id="stock-filter"
+                  oninput="filterStockAdjust()"
+                  style="width: 160px"
+                />
+              </div>
+              <div style="padding: 4px 18px 12px" id="stock-adjust-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COMPETITION CONTROL -->
+        <div class="view" id="view-competition">
+          <div class="two-col">
+            <div class="control-card">
+              <div class="control-card-title">🏪 Market Control</div>
+              <div class="control-card-desc">
+                Open or close trading at any time. When closed, no user can buy
+                or sell. Use this to start and end competition rounds precisely.
+              </div>
+              <div class="status-box">
+                <div class="status-box-label">Current Status</div>
+                <div
+                  class="status-box-value"
+                  id="comp-mkt-status"
+                  style="color: var(--red)"
+                >
+                  🔴 Market CLOSED
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px">
+                <button
+                  class="btn-primary"
+                  onclick="setMarket('open')"
+                  style="flex: 1"
+                >
+                  ▶ Open Market
+                </button>
+                <button
+                  class="btn-danger-full"
+                  onclick="setMarket('close')"
+                  style="flex: 1"
+                >
+                  ■ Close Market
+                </button>
+              </div>
+            </div>
+            <div class="control-card">
+              <div class="control-card-title">⚠️ Reset Competition</div>
+              <div class="control-card-desc">
+                Permanently delete
+                <strong style="color: var(--red)">ALL</strong> user accounts and
+                portfolios. Use only to start a completely new competition
+                round.
+              </div>
+              <div class="status-box">
+                <div class="status-box-label">Registered Users</div>
+                <div class="status-box-value" id="comp-user-count">—</div>
+              </div>
+              <button
+                class="btn-danger-full"
+                onclick="openModal('modal-reset-comp')"
+                style="width: 100%"
+              >
+                🗑 Reset All Users &amp; Portfolios
+              </button>
+              <p
+                style="
+                  font-size: 11px;
+                  color: var(--gray);
+                  margin-top: 10px;
+                  text-align: center;
+                "
+              >
+                ⚠ Irreversible — all data permanently erased
+              </p>
+            </div>
+          </div>
+          <!-- Quick actions -->
+          <div class="control-card">
+            <div class="control-card-title">📋 Quick Actions</div>
+            <div
+              style="
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+              "
+            >
+              <div
+                style="
+                  background: rgba(255, 255, 255, 0.03);
+                  border: 1px solid var(--border);
+                  border-radius: 10px;
+                  padding: 18px;
+                  text-align: center;
+                "
+              >
+                <div style="font-size: 30px; margin-bottom: 8px">🔓</div>
+                <div
+                  style="
+                    font-size: 13px;
+                    font-weight: 800;
+                    color: var(--white);
+                    margin-bottom: 4px;
+                  "
+                >
+                  Open Market
+                </div>
+                <div
+                  style="
+                    font-size: 11px;
+                    color: var(--gray);
+                    margin-bottom: 14px;
+                  "
+                >
+                  Enable all trading now
+                </div>
+                <button
+                  class="btn-primary"
+                  onclick="setMarket('open')"
+                  style="width: 100%; padding: 8px"
+                >
+                  Open Now
+                </button>
+              </div>
+              <div
+                style="
+                  background: rgba(255, 255, 255, 0.03);
+                  border: 1px solid var(--border);
+                  border-radius: 10px;
+                  padding: 18px;
+                  text-align: center;
+                "
+              >
+                <div style="font-size: 30px; margin-bottom: 8px">🔒</div>
+                <div
+                  style="
+                    font-size: 13px;
+                    font-weight: 800;
+                    color: var(--white);
+                    margin-bottom: 4px;
+                  "
+                >
+                  Close Market
+                </div>
+                <div
+                  style="
+                    font-size: 11px;
+                    color: var(--gray);
+                    margin-bottom: 14px;
+                  "
+                >
+                  Pause all trading now
+                </div>
+                <button
+                  class="btn-danger-full"
+                  onclick="setMarket('close')"
+                  style="width: 100%; padding: 8px"
+                >
+                  Close Now
+                </button>
+              </div>
+              <div
+                style="
+                  background: rgba(255, 255, 255, 0.03);
+                  border: 1px solid var(--border);
+                  border-radius: 10px;
+                  padding: 18px;
+                  text-align: center;
+                "
+              >
+                <div style="font-size: 30px; margin-bottom: 8px">🏆</div>
+                <div
+                  style="
+                    font-size: 13px;
+                    font-weight: 800;
+                    color: var(--white);
+                    margin-bottom: 4px;
+                  "
+                >
+                  Leaderboard
+                </div>
+                <div
+                  style="
+                    font-size: 11px;
+                    color: var(--gray);
+                    margin-bottom: 14px;
+                  "
+                >
+                  View live rankings
+                </div>
+                <button
+                  class="btn-refresh"
+                  onclick="showView('leaderboard')"
+                  style="width: 100%; padding: 8px"
+                >
+                  View
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTIVITY LOG -->
+        <div class="view" id="view-activity">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">📝 Admin Activity Log</div>
+              <button class="btn-sm btn-delete" onclick="clearLog()">
+                Clear
+              </button>
+            </div>
+            <div style="padding: 12px 18px" id="activity-log">
+              <div
+                style="text-align: center; padding: 30px; color: var(--gray)"
+              >
+                <div style="font-size: 32px; margin-bottom: 8px">📋</div>
+                <div style="font-size: 13px">
+                  No activity yet. Actions will appear here.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!-- ════════════ MODALS ════════════ -->
+
+    <!-- Delete User -->
+    <div class="modal-overlay" id="modal-delete-user">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">Delete User</div>
+          <button class="modal-close" onclick="closeModal('modal-delete-user')">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="confirm-icon">🗑</div>
+          <div class="confirm-title" id="del-user-title">Delete user?</div>
+          <div class="confirm-desc">
+            This will permanently remove this user's account, portfolio, and all
+            transaction history.
+          </div>
+          <div class="confirm-warn">⚠ This action cannot be undone.</div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-sm btn-view"
+            onclick="closeModal('modal-delete-user')"
+          >
+            Cancel
+          </button>
+          <button
+            class="btn-sm btn-delete"
+            style="padding: 7px 18px"
+            onclick="executeDeleteUser()"
+          >
+            🗑 Delete User
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset User Portfolio -->
+    <div class="modal-overlay" id="modal-reset-user">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">Reset Portfolio</div>
+          <button class="modal-close" onclick="closeModal('modal-reset-user')">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="confirm-icon">🔄</div>
+          <div class="confirm-title" id="rst-user-title">Reset portfolio?</div>
+          <div class="confirm-desc">
+            This resets the user's portfolio to GHS 1,000,000. Their account
+            remains active but all holdings and trade history are cleared.
+          </div>
+          <div class="confirm-warn confirm-warn-amber">
+            ⚠ Trade history will be wiped. The account stays active.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-sm btn-view"
+            onclick="closeModal('modal-reset-user')"
+          >
+            Cancel
+          </button>
+          <button
+            class="btn-sm btn-reset-user"
+            style="padding: 7px 18px"
+            onclick="executeResetUser()"
+          >
+            🔄 Reset Portfolio
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset Competition -->
+    <div class="modal-overlay" id="modal-reset-comp">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">Reset Competition</div>
+          <button class="modal-close" onclick="closeModal('modal-reset-comp')">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="confirm-icon">💥</div>
+          <div class="confirm-title">Delete ALL Users?</div>
+          <div class="confirm-desc">
+            This permanently erases every registered user, their portfolios, and
+            all transaction history. The competition starts completely fresh.
+          </div>
+          <div class="confirm-warn">
+            🚨 IRREVERSIBLE. All data is permanently destroyed.
+          </div>
+          <div style="margin-top: 18px">
+            <label
+              style="
+                font-size: 12px;
+                color: var(--gray);
+                display: block;
+                margin-bottom: 6px;
+              "
+              >Type <strong style="color: var(--white)">RESET</strong> to
+              confirm:</label
+            >
+            <input
+              type="text"
+              id="reset-confirm-input"
+              placeholder="Type RESET here..."
+              style="
+                width: 100%;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 10px 14px;
+                color: var(--white);
+                font-family: &quot;Barlow&quot;, sans-serif;
+                font-size: 13px;
+                outline: none;
+              "
+            />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            class="btn-sm btn-view"
+            onclick="closeModal('modal-reset-comp')"
+          >
+            Cancel
+          </button>
+          <button
+            class="btn-sm btn-delete"
+            style="padding: 7px 18px"
+            onclick="executeResetCompetition()"
+          >
+            💥 Reset Everything
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Detail -->
+    <div class="modal-overlay" id="modal-user-detail">
+      <div class="modal wide">
+        <div class="modal-header">
+          <div class="modal-title" id="ud-modal-title">User Details</div>
+          <button class="modal-close" onclick="closeModal('modal-user-detail')">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body" id="ud-modal-body">
+          <div style="text-align: center; padding: 30px; color: var(--gray)">
+            Loading...
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-sm btn-reset-user" id="ud-rst-btn">
+            🔄 Reset Portfolio
+          </button>
+          <button class="btn-sm btn-delete" id="ud-del-btn">
+            🗑 Delete User
+          </button>
+          <button
+            class="btn-sm btn-view"
+            onclick="closeModal('modal-user-detail')"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
     <script>
-        // Timer functionality
-        let timerInterval;
-        let timeLeft = 15 * 60; // 15 minutes in seconds
-        let timerRunning = false;
-        let disqualifiedTraders = new Set();
-        let marketOpen = false;
+      // ══ STATE ══
+      let marketOpen = false;
+      let stocksData = [];
+      let usersData = [];
+      let pendingDeleteUser = "";
+      let pendingResetUser = "";
+      let activityLog = [];
 
-        function updateTimerDisplay() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            document.getElementById('timerDisplay').textContent = 
-                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      // ══ LOAD ALL ══
+      async function loadAll() {
+        await Promise.all([
+          loadStats(),
+          loadLeaderboard(),
+          loadUsers(),
+          loadStocks(),
+        ]);
+      }
+
+      // ══ STATS ══
+      async function loadStats() {
+        try {
+          const r = await fetch("/api/admin/stats");
+          const d = await r.json();
+          document.getElementById("stat-users").textContent =
+            d.total_users ?? 0;
+          document.getElementById("stat-active").textContent =
+            d.active_traders ?? 0;
+          document.getElementById("stat-trades").textContent =
+            d.total_trades ?? 0;
+          document.getElementById("stat-avg").textContent =
+            d.average_portfolio_value
+              ? "GHS " + Math.round(d.average_portfolio_value).toLocaleString()
+              : "—";
+          document.getElementById("comp-user-count").textContent =
+            (d.total_users ?? 0) + " users";
+          marketOpen = d.market_open;
+          updateMarketUI();
+        } catch (e) {}
+      }
+
+      // ══ LEADERBOARD ══
+      async function loadLeaderboard() {
+        try {
+          const r = await fetch("/api/admin/leaderboard");
+          const data = await r.json();
+          document.getElementById("lb-count").textContent =
+            data.length + " traders";
+
+          const topEl = document.getElementById("top-performers-tbody");
+          topEl.innerHTML = !data.length
+            ? `<tr><td colspan="5" style="text-align:center;color:var(--gray);padding:20px">No traders yet</td></tr>`
+            : data
+                .slice(0, 5)
+                .map((t) => {
+                  const rc = t.rank <= 3 ? `rank-${t.rank}` : "rank-other";
+                  const pc = t.growth_percent >= 0 ? "pct-pos" : "pct-neg";
+                  const medal =
+                    t.rank <= 3 ? ["🥇", "🥈", "🥉"][t.rank - 1] : t.rank;
+                  return `<tr>
+            <td><span class="rank-badge ${rc}">${medal}</span></td>
+            <td style="font-weight:800">${t.username}</td>
+            <td style="font-family:'JetBrains Mono',monospace">GHS ${t.portfolio_value.toLocaleString("en-GH", { minimumFractionDigits: 2 })}</td>
+            <td class="${pc}">${t.growth_percent >= 0 ? "+" : ""}${t.growth_percent}%</td>
+            <td><button class="btn-sm btn-view" onclick="viewUser('${t.username}')">👁</button></td>
+          </tr>`;
+                })
+                .join("");
+
+          const lbEl = document.getElementById("leaderboard-tbody");
+          if (!data.length) {
+            lbEl.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--gray);padding:30px">No traders registered yet</td></tr>`;
+          } else {
+            const maxVal = data[0]?.portfolio_value || 1000000;
+            lbEl.innerHTML = data
+              .map((t) => {
+                const rc = t.rank <= 3 ? `rank-${t.rank}` : "rank-other";
+                const pc = t.growth_percent >= 0 ? "pct-pos" : "pct-neg";
+                const pw = Math.min(
+                  100,
+                  Math.max(0, (t.portfolio_value / maxVal) * 100),
+                );
+                const medal =
+                  t.rank <= 3 ? ["🥇", "🥈", "🥉"][t.rank - 1] : t.rank;
+                return `<tr>
+          <td><span class="rank-badge ${rc}">${medal}</span></td>
+          <td style="font-weight:800">${t.username}</td>
+          <td style="font-family:'JetBrains Mono',monospace;font-weight:700">GHS ${t.portfolio_value.toLocaleString("en-GH", { minimumFractionDigits: 2 })}</td>
+          <td class="${pc}">${t.growth_percent >= 0 ? "+" : ""}${t.growth_percent}%</td>
+          <td style="font-family:'JetBrains Mono',monospace">GHS ${t.cash.toLocaleString("en-GH", { minimumFractionDigits: 2 })}</td>
+          <td style="text-align:center">${t.holdings_count}</td>
+          <td style="text-align:center">${t.total_trades}</td>
+          <td><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pw}%"></div></div></td>
+          <td><div style="display:flex;gap:4px">
+            <button class="btn-sm btn-view" onclick="viewUser('${t.username}')" title="View">👁</button>
+            <button class="btn-sm btn-reset-user" onclick="promptResetUser('${t.username}')" title="Reset">🔄</button>
+            <button class="btn-sm btn-delete" onclick="promptDeleteUser('${t.username}')" title="Delete">🗑</button>
+          </div></td>
+        </tr>`;
+              })
+              .join("");
+          }
+        } catch (e) {}
+      }
+
+      // ══ USERS ══
+      async function loadUsers() {
+        try {
+          const r = await fetch("/api/admin/users");
+          usersData = await r.json();
+          const cnt = usersData.length;
+          document.getElementById("users-count").textContent = cnt + " users";
+          const badge = document.getElementById("user-nav-badge");
+          badge.style.display = cnt > 0 ? "inline" : "none";
+          badge.textContent = cnt;
+          renderUsersTable(usersData);
+        } catch (e) {}
+      }
+
+      function renderUsersTable(data) {
+        const el = document.getElementById("users-tbody");
+        if (!data.length) {
+          el.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--gray);padding:30px">No users registered yet</td></tr>`;
+          return;
         }
+        el.innerHTML = data
+          .map((u) => {
+            const pc = u.growth_percent >= 0 ? "pct-pos" : "pct-neg";
+            return `<tr>
+      <td style="font-weight:800">${u.username}</td>
+      <td style="font-family:'JetBrains Mono',monospace">GHS ${u.portfolio_value.toLocaleString("en-GH", { minimumFractionDigits: 2 })}</td>
+      <td class="${pc}">${u.growth_percent >= 0 ? "+" : ""}${u.growth_percent}%</td>
+      <td style="font-family:'JetBrains Mono',monospace">GHS ${u.cash.toLocaleString("en-GH", { minimumFractionDigits: 2 })}</td>
+      <td style="text-align:center">${u.holdings_count}</td>
+      <td style="text-align:center">${u.total_trades}</td>
+      <td><span style="color:var(--green);font-size:11px;font-weight:700">● Active</span></td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn-sm btn-view" onclick="viewUser('${u.username}')">👁 View</button>
+        <button class="btn-sm btn-reset-user" onclick="promptResetUser('${u.username}')">🔄 Reset</button>
+        <button class="btn-sm btn-delete" onclick="promptDeleteUser('${u.username}')">🗑 Delete</button>
+      </div></td>
+    </tr>`;
+          })
+          .join("");
+      }
 
-        function setTimer() {
-            const minutes = parseInt(document.getElementById('minutesInput').value);
-            if (minutes > 0) {
-                timeLeft = minutes * 60;
-                updateTimerDisplay();
-                document.getElementById('timerStatus').textContent = `Timer set to ${minutes} minutes`;
-                document.getElementById('timerStatus').className = 'timer-status timer-paused';
-            }
+      function filterUsers() {
+        const q = document.getElementById("user-search").value.toLowerCase();
+        renderUsersTable(
+          usersData.filter((u) => u.username.toLowerCase().includes(q)),
+        );
+      }
+
+      // ══ STOCKS ══
+      async function loadStocks() {
+        try {
+          const r = await fetch("/api/stocks");
+          stocksData = await r.json();
+          const el = document.getElementById("stocks-tbody");
+          el.innerHTML = stocksData
+            .map((s) => {
+              const bars = (s.history || [])
+                .slice(-12)
+                .map((h) => {
+                  const arr = s.history;
+                  const mn = Math.min(...arr.map((x) => x.price)),
+                    mx = Math.max(...arr.map((x) => x.price));
+                  const ht =
+                    Math.round(((h.price - mn) / (mx - mn || 1)) * 20) + 4;
+                  return `<div style="width:4px;height:${ht}px;background:rgba(46,159,212,0.5);border-radius:1px;display:inline-block;vertical-align:bottom"></div>`;
+                })
+                .join("");
+              return `<tr>
+        <td style="color:var(--sky);font-weight:700">${s.symbol}</td>
+        <td style="color:var(--gray-light);font-size:12px">${s.name}</td>
+        <td><span style="background:rgba(46,159,212,0.08);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:10px;color:var(--sky)">${s.sector}</span></td>
+        <td style="font-family:'JetBrains Mono',monospace;font-weight:700">GHS ${s.price.toFixed(2)}</td>
+        <td><div style="display:flex;align-items:flex-end;gap:1px;height:28px">${bars || '<span style="color:var(--gray);font-size:11px">—</span>'}</div></td>
+      </tr>`;
+            })
+            .join("");
+
+          const sorted = [...stocksData].sort((a, b) => b.price - a.price);
+          document.getElementById("movers-tbody").innerHTML = sorted
+            .slice(0, 8)
+            .map(
+              (s) =>
+                `<tr>
+        <td style="color:var(--sky);font-weight:700">${s.symbol}</td>
+        <td style="font-size:12px;color:var(--gray-light)">${s.name.substring(0, 26)}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-weight:700">GHS ${s.price.toFixed(2)}</td>
+      </tr>`,
+            )
+            .join("");
+
+          renderStockAdjust();
+        } catch (e) {}
+      }
+
+      function renderStockAdjust() {
+        const q = (
+          document.getElementById("stock-filter")?.value || ""
+        ).toLowerCase();
+        const el = document.getElementById("stock-adjust-list");
+        if (!el) return;
+        const filtered = stocksData.filter(
+          (s) =>
+            !q ||
+            s.symbol.toLowerCase().includes(q) ||
+            s.name.toLowerCase().includes(q),
+        );
+        el.innerHTML = filtered
+          .map(
+            (s) => `
+    <div class="sa-row" id="sar-${s.symbol}">
+      <span class="sa-sym">${s.symbol}</span>
+      <span class="sa-name">${s.name}</span>
+      <span class="sa-price" id="sap-${s.symbol}">GHS ${s.price.toFixed(2)}</span>
+      <input class="sa-input" type="number" id="sai-${s.symbol}" placeholder="${s.price.toFixed(2)}" step="0.01" min="0.01"/>
+      <button class="btn-sm btn-primary" onclick="applyStockPrice('${s.symbol}')" style="padding:5px 12px">Apply</button>
+    </div>`,
+          )
+          .join("");
+      }
+      function filterStockAdjust() {
+        renderStockAdjust();
+      }
+
+      async function applyStockPrice(symbol) {
+        const inp = document.getElementById(`sai-${symbol}`);
+        const np = parseFloat(inp.value);
+        if (!np || np <= 0) {
+          showToast("Enter a valid positive price", "error");
+          return;
         }
-
-        function startTimer() {
-            if (!timerRunning && timeLeft > 0) {
-                timerRunning = true;
-                openMarket(); // Automatically open market when timer starts
-                timerInterval = setInterval(() => {
-                    timeLeft--;
-                    updateTimerDisplay();
-                    
-                    if (timeLeft <= 0) {
-                        clearInterval(timerInterval);
-                        timerRunning = false;
-                        closeMarket(); // Automatically close market when timer ends
-                        document.getElementById('timerStatus').textContent = '⏰ TIME\'S UP! Competition Ended';
-                        document.getElementById('timerStatus').className = 'timer-status timer-finished';
-                        // Play sound or show alert when time's up
-                        if ('Notification' in window && Notification.permission === 'granted') {
-                            new Notification('Competition Time Ended!');
-                        }
-                    }
-                }, 1000);
-                
-                document.getElementById('timerStatus').textContent = '⏱️ Competition Running...';
-                document.getElementById('timerStatus').className = 'timer-status timer-running';
-            }
+        try {
+          const r = await fetch("/api/admin/adjust_stock_price", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ symbol, price: np }),
+          });
+          const d = await r.json();
+          if (d.success) {
+            showToast(`✅ ${d.message}`, "success");
+            document.getElementById(`sap-${symbol}`).textContent =
+              `GHS ${np.toFixed(2)}`;
+            inp.value = "";
+            addLog("stock", `⚡ ${symbol} price → GHS ${np.toFixed(2)}`);
+            const s = stocksData.find((x) => x.symbol === symbol);
+            if (s) s.price = np;
+          } else {
+            showToast(d.error || "Failed", "error");
+          }
+        } catch (e) {
+          showToast("Network error", "error");
         }
+      }
 
-        function pauseTimer() {
-            if (timerRunning) {
-                clearInterval(timerInterval);
-                timerRunning = false;
-                closeMarket(); // Close market when timer is paused
-                document.getElementById('timerStatus').textContent = '⏸️ Competition Paused';
-                document.getElementById('timerStatus').className = 'timer-status timer-paused';
-            }
+      // ══ MARKET CONTROL ══
+      function updateMarketUI() {
+        // Sidebar
+        const dot = document.getElementById("sb-dot");
+        const lbl = document.getElementById("sb-mkt-label");
+        if (dot) {
+          dot.className = "mkt-dot" + (marketOpen ? " open" : "");
         }
-
-        function resetTimer() {
-            clearInterval(timerInterval);
-            timerRunning = false;
-            timeLeft = 15 * 60;
-            closeMarket(); // Ensure market is closed when timer is reset
-            updateTimerDisplay();
-            document.getElementById('timerStatus').textContent = 'Ready to start';
-            document.getElementById('timerStatus').className = 'timer-status';
+        if (lbl) {
+          lbl.textContent = marketOpen ? "Open" : "Closed";
+          lbl.className = "mkt-status-text " + (marketOpen ? "open" : "closed");
         }
-
-        // Market control functions
-        async function openMarket() {
-            try {
-                const response = await fetch('/api/admin/market_control', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ action: 'open' })
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    marketOpen = true;
-                    updateMarketStatus();
-                    alert('✅ Market opened successfully! Trading is now allowed.');
-                } else {
-                    alert('❌ Error: ' + result.error);
-                }
-            } catch (error) {
-                alert('❌ Network error. Please try again.');
-            }
+        // Topbar
+        const tbDot = document.getElementById("tb-dot");
+        const tbVal = document.getElementById("tb-mkt-val");
+        const tbBtn = document.getElementById("tb-toggle-btn");
+        if (tbDot) tbDot.className = "tb-dot" + (marketOpen ? " open" : "");
+        if (tbVal) {
+          tbVal.textContent = marketOpen ? "Open" : "Closed";
+          tbVal.style.color = marketOpen ? "var(--green)" : "var(--red)";
         }
-
-        async function closeMarket() {
-            try {
-                const response = await fetch('/api/admin/market_control', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ action: 'close' })
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    marketOpen = false;
-                    updateMarketStatus();
-                    alert('✅ Market closed successfully! Trading is now suspended.');
-                } else {
-                    alert('❌ Error: ' + result.error);
-                }
-            } catch (error) {
-                alert('❌ Network error. Please try again.');
-            }
+        if (tbBtn) {
+          tbBtn.textContent = marketOpen ? "Close" : "Open";
+          tbBtn.className =
+            "tb-toggle " + (marketOpen ? "mkt-btn-close" : "mkt-btn-open");
         }
-
-        function updateMarketStatus() {
-            const marketStatusSection = document.getElementById('marketStatusSection');
-            const marketStatusText = document.getElementById('marketStatusText');
-            const marketStatusDescription = document.getElementById('marketStatusDescription');
-            const openMarketBtn = document.getElementById('openMarketBtn');
-            const closeMarketBtn = document.getElementById('closeMarketBtn');
-
-            if (marketOpen) {
-                marketStatusSection.className = 'market-status market-status-open';
-                marketStatusText.textContent = 'OPEN';
-                marketStatusText.style.color = '#2ecc71';
-                marketStatusDescription.textContent = 'The market is currently open. Trading is allowed.';
-                openMarketBtn.disabled = true;
-                closeMarketBtn.disabled = false;
-            } else {
-                marketStatusSection.className = 'market-status market-status-closed';
-                marketStatusText.textContent = 'CLOSED';
-                marketStatusText.style.color = '#e63946';
-                marketStatusDescription.textContent = 'The market is currently closed. No trading is allowed.';
-                openMarketBtn.disabled = false;
-                closeMarketBtn.disabled = true;
-            }
+        // Competition page
+        const cs = document.getElementById("comp-mkt-status");
+        if (cs) {
+          cs.textContent = marketOpen
+            ? "🟢 Market OPEN — Trading Active"
+            : "🔴 Market CLOSED — Trading Paused";
+          cs.style.color = marketOpen ? "var(--green)" : "var(--red)";
         }
-
-        // Disqualify trader function
-        function disqualifyTrader(username) {
-            if (confirm(`Are you sure you want to disqualify ${username}?`)) {
-                disqualifiedTraders.add(username);
-                loadLeaderboard();
-                loadUsers();
-                alert(`${username} has been disqualified from the competition.`);
-            }
+        // Overview
+        const sm = document.getElementById("stat-market");
+        if (sm) {
+          sm.textContent = marketOpen ? "Open" : "Closed";
+          sm.style.color = marketOpen ? "var(--green)" : "var(--red)";
         }
+      }
 
-        // Reinstate trader function
-        function reinstateTrader(username) {
-            if (confirm(`Are you sure you want to reinstate ${username}?`)) {
-                disqualifiedTraders.delete(username);
-                loadLeaderboard();
-                loadUsers();
-                alert(`${username} has been reinstated to the competition.`);
-            }
+      function toggleMarket() {
+        setMarket(marketOpen ? "close" : "open");
+      }
+
+      async function setMarket(action) {
+        try {
+          const r = await fetch("/api/admin/market_control", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action }),
+          });
+          const d = await r.json();
+          if (d.success) {
+            marketOpen = d.market_open;
+            updateMarketUI();
+            showToast(
+              marketOpen
+                ? "🟢 Market opened — trading active"
+                : "🔴 Market closed — trading paused",
+              marketOpen ? "success" : "warning",
+            );
+            addLog(
+              "market",
+              marketOpen ? "🟢 Market opened" : "🔴 Market closed",
+            );
+          } else {
+            showToast(d.error || "Failed", "error");
+          }
+        } catch (e) {
+          showToast("Network error", "error");
         }
+      }
 
-        // Load all admin data
-        async function loadAdminData() {
-            await Promise.all([
-                loadStats(),
-                loadLeaderboard(),
-                loadUsers()
-            ]);
+      // ══ USER DETAIL ══
+      async function viewUser(username) {
+        document.getElementById("ud-modal-title").textContent =
+          `👤 ${username}`;
+        document.getElementById("ud-modal-body").innerHTML =
+          `<div style="text-align:center;padding:30px;color:var(--gray)">Loading...</div>`;
+        document.getElementById("ud-rst-btn").onclick = () => {
+          closeModal("modal-user-detail");
+          promptResetUser(username);
+        };
+        document.getElementById("ud-del-btn").onclick = () => {
+          closeModal("modal-user-detail");
+          promptDeleteUser(username);
+        };
+        openModal("modal-user-detail");
+        try {
+          const r = await fetch(`/api/admin/user_detail/${username}`);
+          const d = await r.json();
+          if (d.error) {
+            document.getElementById("ud-modal-body").innerHTML =
+              `<p style="color:var(--red)">${d.error}</p>`;
+            return;
+          }
+          const gc = d.growth_pct >= 0 ? "var(--green)" : "var(--red)";
+          const hHtml = d.holdings.length
+            ? d.holdings
+                .map(
+                  (h) => `<tr>
+          <td>${h.symbol}</td><td>${h.shares.toLocaleString()}</td>
+          <td>GHS ${h.avg_cost.toFixed(2)}</td><td>GHS ${h.current_price.toFixed(2)}</td>
+          <td>GHS ${h.current_value.toLocaleString("en-GH", { minimumFractionDigits: 2 })}</td>
+          <td style="color:${h.pnl >= 0 ? "var(--green)" : "var(--red)"};font-weight:700">${h.pnl >= 0 ? "+" : ""}GHS ${h.pnl.toFixed(2)} (${h.pnl_pct}%)</td>
+          <td>${h.stop_loss ? "GHS " + h.stop_loss.toFixed(2) : "—"}</td>
+          <td>${h.price_target ? "GHS " + h.price_target.toFixed(2) : "—"}</td>
+        </tr>`,
+                )
+                .join("")
+            : '<tr><td colspan="8" style="text-align:center;color:var(--gray)">No holdings</td></tr>';
+          const txHtml = d.transactions.length
+            ? [...d.transactions]
+                .reverse()
+                .map(
+                  (tx) => `<tr>
+          <td style="color:${tx.type.includes("sell") ? "var(--red)" : "var(--green)"}">${tx.type.replace(/_/g, " ")}</td>
+          <td>${tx.symbol}</td><td>${tx.shares}</td>
+          <td>GHS ${tx.price.toFixed(2)}</td><td>GHS ${tx.total.toFixed(2)}</td>
+          <td style="font-size:11px">${new Date(tx.timestamp).toLocaleString()}</td>
+        </tr>`,
+                )
+                .join("")
+            : '<tr><td colspan="6" style="text-align:center;color:var(--gray)">No transactions</td></tr>';
+          document.getElementById("ud-modal-body").innerHTML = `
+      <div class="ud-header-card">
+        <div class="ud-avatar">${username.charAt(0).toUpperCase()}</div>
+        <div>
+          <div class="ud-username">${username}</div>
+          <div class="ud-tags">
+            <div class="ud-tag">Value: <span>GHS ${d.total_value.toLocaleString("en-GH", { minimumFractionDigits: 2 })}</span></div>
+            <div class="ud-tag">Cash: <span>GHS ${d.cash.toLocaleString("en-GH", { minimumFractionDigits: 2 })}</span></div>
+            <div class="ud-tag">Growth: <span style="color:${gc}">${d.growth_pct >= 0 ? "+" : ""}${d.growth_pct}%</span></div>
+            <div class="ud-tag">Trades: <span>${d.total_trades}</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="ud-sec">Holdings (${d.holdings.length})</div>
+      <table class="mini-tbl"><thead><tr><th>Symbol</th><th>Shares</th><th>Avg Cost</th><th>Current</th><th>Value</th><th>P&L</th><th>Stop-Loss</th><th>Target</th></tr></thead><tbody>${hHtml}</tbody></table>
+      <div class="ud-sec">Recent Transactions (last 20)</div>
+      <table class="mini-tbl"><thead><tr><th>Type</th><th>Symbol</th><th>Shares</th><th>Price</th><th>Total</th><th>Time</th></tr></thead><tbody>${txHtml}</tbody></table>`;
+        } catch (e) {
+          document.getElementById("ud-modal-body").innerHTML =
+            `<p style="color:var(--red)">Failed to load user data.</p>`;
         }
+      }
 
-        // Reset competition
-        async function resetCompetition() {
-            if (!confirm('⚠️ ARE YOU SURE?\n\nThis will DELETE ALL TRADERS and reset the competition.\nAll user data will be permanently lost!\n\nThis action cannot be undone.')) {
-                return;
-            }
-            
-            const resetBtn = document.getElementById('resetBtn');
-            const originalText = resetBtn.innerHTML;
-            resetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
-            resetBtn.disabled = true;
-            
-            try {
-                const response = await fetch('/api/admin/reset_competition', {
-                    method: 'POST'
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    disqualifiedTraders.clear();
-                    resetTimer();
-                    alert('✅ Competition reset successfully!\n\nAll users have been cleared. New traders can now register.');
-                    location.reload();
-                } else {
-                    alert('❌ Error: ' + result.error);
-                    resetBtn.innerHTML = originalText;
-                    resetBtn.disabled = false;
-                }
-            } catch (error) {
-                alert('❌ Network error. Please try again.');
-                resetBtn.innerHTML = originalText;
-                resetBtn.disabled = false;
-            }
+      // ══ DELETE USER ══
+      function promptDeleteUser(username) {
+        pendingDeleteUser = username;
+        document.getElementById("del-user-title").textContent =
+          `Delete "${username}"?`;
+        openModal("modal-delete-user");
+      }
+      async function executeDeleteUser() {
+        if (!pendingDeleteUser) return;
+        try {
+          const r = await fetch("/api/admin/delete_user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: pendingDeleteUser }),
+          });
+          const d = await r.json();
+          if (d.success) {
+            closeModal("modal-delete-user");
+            showToast(`✅ User "${pendingDeleteUser}" deleted`, "success");
+            addLog("danger", `🗑 Deleted user: ${pendingDeleteUser}`);
+            pendingDeleteUser = "";
+            await loadAll();
+          } else {
+            showToast(d.error || "Delete failed", "error");
+          }
+        } catch (e) {
+          showToast("Network error", "error");
         }
+      }
 
-        // Load statistics
-        async function loadStats() {
-            try {
-                const response = await fetch('/api/admin/stats');
-                const stats = await response.json();
-                
-                // Update market status from server
-                marketOpen = stats.market_open;
-                updateMarketStatus();
-                
-                const statsGrid = document.getElementById('statsGrid');
-                statsGrid.innerHTML = `
-                    <div class="stat-card">
-                        <div class="stat-value">${stats.total_users}</div>
-                        <div class="stat-label">Total Traders</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">₵${stats.total_portfolio_value.toLocaleString()}</div>
-                        <div class="stat-label">Total Portfolio Value</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">₵${stats.average_portfolio_value.toLocaleString()}</div>
-                        <div class="stat-label">Average Portfolio</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${stats.active_traders}</div>
-                        <div class="stat-label">Active Traders</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${stats.total_trades}</div>
-                        <div class="stat-label">Total Trades</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${stats.market_stats.biggest_gainer.symbol}</div>
-                        <div class="stat-label">Top Gainer</div>
-                    </div>
-                `;
-            } catch (error) {
-                console.error('Error loading stats:', error);
-                document.getElementById('statsGrid').innerHTML = '<div class="stat-card">Error loading statistics</div>';
-            }
+      // ══ RESET USER ══
+      function promptResetUser(username) {
+        pendingResetUser = username;
+        document.getElementById("rst-user-title").textContent =
+          `Reset "${username}"'s portfolio?`;
+        openModal("modal-reset-user");
+      }
+      async function executeResetUser() {
+        if (!pendingResetUser) return;
+        try {
+          const r = await fetch("/api/admin/reset_user_portfolio", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: pendingResetUser }),
+          });
+          const d = await r.json();
+          if (d.success) {
+            closeModal("modal-reset-user");
+            showToast(
+              `✅ Portfolio reset for "${pendingResetUser}"`,
+              "success",
+            );
+            addLog("user", `🔄 Reset portfolio: ${pendingResetUser}`);
+            pendingResetUser = "";
+            await loadAll();
+          } else {
+            showToast(d.error || "Reset failed", "error");
+          }
+        } catch (e) {
+          showToast("Network error", "error");
         }
+      }
 
-        // Load leaderboard
-        async function loadLeaderboard() {
-            try {
-                const response = await fetch('/api/admin/leaderboard');
-                const leaderboard = await response.json();
-                
-                const leaderboardTable = document.getElementById('leaderboardTable');
-                leaderboardTable.innerHTML = '';
-                
-                // Filter out disqualified traders and sort
-                const qualifiedTraders = leaderboard.filter(trader => !disqualifiedTraders.has(trader.username));
-                qualifiedTraders.sort((a, b) => b.portfolio_value - a.portfolio_value);
-                
-                qualifiedTraders.forEach((trader, index) => {
-                    const row = document.createElement('tr');
-                    if (index < 3) {
-                        row.className = `rank-${index + 1}`;
-                    }
-                    
-                    const growthClass = trader.growth_percent >= 0 ? 'positive' : 'negative';
-                    const growthSign = trader.growth_percent >= 0 ? '+' : '';
-                    
-                    row.innerHTML = `
-                        <td>
-                            <strong>#${index + 1}</strong>
-                            ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : ''}
-                        </td>
-                        <td><strong>${trader.username}</strong></td>
-                        <td>₵${trader.portfolio_value.toLocaleString()}</td>
-                        <td class="${growthClass}">${growthSign}${trader.growth_percent}%</td>
-                        <td>₵${trader.cash.toLocaleString()}</td>
-                        <td>${trader.holdings_count}</td>
-                        <td>${trader.total_trades}</td>
-                        <td><span class="badge badge-success">Active</span></td>
-                        <td>
-                            <button class="btn btn-danger" onclick="disqualifyTrader('${trader.username}')" style="padding: 6px 12px; font-size: 0.8rem;">
-                                <i class="fas fa-ban"></i> DQ
-                            </button>
-                        </td>
-                    `;
-                    
-                    leaderboardTable.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error loading leaderboard:', error);
-                document.getElementById('leaderboardTable').innerHTML = '<tr><td colspan="9">Error loading leaderboard</td></tr>';
-            }
+      // ══ RESET COMPETITION ══
+      async function executeResetCompetition() {
+        const val = document.getElementById("reset-confirm-input").value.trim();
+        if (val !== "RESET") {
+          showToast("Type RESET to confirm", "error");
+          return;
         }
-
-        // Load users
-        async function loadUsers() {
-            try {
-                const response = await fetch('/api/admin/users');
-                const users = await response.json();
-                
-                const usersTable = document.getElementById('usersTable');
-                usersTable.innerHTML = '';
-                
-                users.forEach(user => {
-                    const row = document.createElement('tr');
-                    const isDisqualified = disqualifiedTraders.has(user.username);
-                    
-                    if (isDisqualified) {
-                        row.className = 'disqualified';
-                    }
-                    
-                    const growthClass = user.growth_percent >= 0 ? 'positive' : 'negative';
-                    const growthSign = user.growth_percent >= 0 ? '+' : '';
-                    const status = isDisqualified ? 'Disqualified' : (user.holdings_count > 0 ? 'Active' : 'Inactive');
-                    const statusClass = isDisqualified ? 'badge-disqualified' : (user.holdings_count > 0 ? 'badge-success' : 'badge-warning');
-                    
-                    row.innerHTML = `
-                        <td><strong>${user.username}</strong></td>
-                        <td>₵${user.portfolio_value.toLocaleString()}</td>
-                        <td class="${growthClass}">${growthSign}${user.growth_percent}%</td>
-                        <td>₵${user.cash.toLocaleString()}</td>
-                        <td>${user.holdings_count}</td>
-                        <td>${user.total_trades}</td>
-                        <td><span class="badge ${statusClass}">${status}</span></td>
-                        <td>
-                            ${isDisqualified ? 
-                                `<button class="btn btn-success" onclick="reinstateTrader('${user.username}')" style="padding: 6px 12px; font-size: 0.8rem;">
-                                    <i class="fas fa-check"></i> Reinstate
-                                </button>` :
-                                `<button class="btn btn-danger" onclick="disqualifyTrader('${user.username}')" style="padding: 6px 12px; font-size: 0.8rem;">
-                                    <i class="fas fa-ban"></i> DQ
-                                </button>`
-                            }
-                        </td>
-                    `;
-                    
-                    usersTable.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error loading users:', error);
-                document.getElementById('usersTable').innerHTML = '<tr><td colspan="8">Error loading users</td></tr>';
-            }
+        try {
+          const r = await fetch("/api/admin/reset_competition", {
+            method: "POST",
+          });
+          const d = await r.json();
+          if (d.success) {
+            closeModal("modal-reset-comp");
+            showToast("✅ Competition reset. All users cleared.", "success");
+            addLog("danger", "💥 Full competition reset — all users deleted");
+            await loadAll();
+          } else {
+            showToast(d.error || "Reset failed", "error");
+          }
+        } catch (e) {
+          showToast("Network error", "error");
         }
+      }
 
-        // Request notification permission
-        if ('Notification' in window) {
-            Notification.requestPermission();
-        }
-
-        // Auto-refresh data every 5 seconds
-        setInterval(loadAdminData, 5000);
-
-        // Initial load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadAdminData();
-            updateTimerDisplay();
+      // ══ ACTIVITY LOG ══
+      function addLog(type, message) {
+        activityLog.unshift({
+          type,
+          message,
+          time: new Date().toLocaleTimeString(),
         });
+        if (activityLog.length > 100) activityLog.pop();
+        renderLog();
+      }
+      function renderLog() {
+        const el = document.getElementById("activity-log");
+        if (!activityLog.length) {
+          el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--gray)"><div style="font-size:32px;margin-bottom:8px">📋</div><div style="font-size:13px">No activity yet.</div></div>`;
+          return;
+        }
+        const icons = { market: "🏪", user: "👤", danger: "⚠️", stock: "📈" };
+        el.innerHTML = activityLog
+          .map(
+            (l) => `
+    <div class="log-item">
+      <div class="log-icon ${l.type}">${icons[l.type] || "📝"}</div>
+      <div>
+        <div class="log-msg">${l.message}</div>
+        <div class="log-time">${l.time}</div>
+      </div>
+    </div>`,
+          )
+          .join("");
+      }
+      function clearLog() {
+        activityLog = [];
+        renderLog();
+      }
+
+      // ══ MODAL HELPERS ══
+      function openModal(id) {
+        document.getElementById(id).classList.add("open");
+      }
+      function closeModal(id) {
+        document.getElementById(id).classList.remove("open");
+      }
+      document.querySelectorAll(".modal-overlay").forEach((m) => {
+        m.addEventListener("click", (e) => {
+          if (e.target === m) m.classList.remove("open");
+        });
+      });
+
+      // ══ NAVIGATION ══
+      const viewTitles = {
+        overview: "Admin <span>Overview</span>",
+        leaderboard: "Competition <span>Leaderboard</span>",
+        users: "User <span>Management</span>",
+        stocks: "Market <span>Data</span>",
+        "price-control": "Price <span>Control</span>",
+        competition: "Competition <span>Control</span>",
+        activity: "Activity <span>Log</span>",
+      };
+      function showView(name) {
+        document
+          .querySelectorAll(".view")
+          .forEach((v) => v.classList.remove("active"));
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((n) => n.classList.remove("active"));
+        const v = document.getElementById("view-" + name);
+        const n = document.querySelector(
+          `.nav-item[onclick="showView('${name}')"]`,
+        );
+        if (v) v.classList.add("active");
+        if (n) n.classList.add("active");
+        document.getElementById("topbar-title").innerHTML =
+          viewTitles[name] || name;
+      }
+
+      // ══ TOAST ══
+      let toastTimer;
+      function showToast(msg, type = "info") {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.className = "toast show " + type;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove("show"), 4500);
+      }
+
+      loadAll();
+      setInterval(loadAll, 30000);
     </script>
-</body>
+  </body>
 </html>
