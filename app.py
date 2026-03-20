@@ -243,10 +243,10 @@ def fetch_gse_data_from_afx():
 
 
 def fetch_gse_data_from_api():
-    """Fetch real GSE data from devco.gse.com.gh API using urllib"""
+    """Fetch real GSE data from dev.kwayisi.org API using urllib"""
     try:
         req = urllib.request.Request(
-            'https://devco.gse.com.gh/api/v1/market/summary',
+            'https://dev.kwayisi.org/apis/gse/live',
             headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
         )
 
@@ -257,11 +257,11 @@ def fetch_gse_data_from_api():
 
         if isinstance(data, list):
             for item in data:
-                if 'symbol' in item and 'lastPrice' in item:
+                if 'name' in item and 'price' in item:
                     try:
                         stock_data.append({
-                            'symbol': item['symbol'],
-                            'price': float(item['lastPrice'])
+                            'symbol': item['name'],
+                            'price': float(item['price'])
                         })
                     except (ValueError, TypeError):
                         continue
@@ -870,6 +870,9 @@ def calculate_order_value():
 price_thread = threading.Thread(target=update_prices, daemon=True)
 price_thread.start()
 
+# -----------------------------
+# Entry point
+# -----------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
