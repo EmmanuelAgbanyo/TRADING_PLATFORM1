@@ -7,6 +7,7 @@ import time
 import json
 import urllib.request
 import urllib.error
+import os
 from html.parser import HTMLParser
 
 app = Flask(__name__)
@@ -932,4 +933,6 @@ def apply_stop_losses():
 # Entry point
 # -----------------------------
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5001)
+
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
