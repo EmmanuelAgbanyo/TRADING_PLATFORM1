@@ -4,6 +4,10 @@ from datetime import datetime, timedelta
 import uuid
 import threading
 import time
+import json
+import urllib.request
+import urllib.error
+from html.parser import HTMLParser
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here_change_in_production'  # Change this in production
@@ -50,130 +54,190 @@ user_lock = threading.Lock()
 market_open = False
 
 # -----------------------------
-# Portfolio helpers
+# Simple HTML Parser for extracting table data
 # -----------------------------
-def init_portfolio():
-    """Initialize user portfolio"""
-    return {
-        "cash": 100000.00,
-        "holdings": {},          # {symbol: {"shares": int, "avg_cost": float, "stop_loss": float|None, "price_target": float|None}}
-        "total_value": 100000.00,
-        "transactions": []       # list of trade dicts
-    }
-
-
-def calculate_portfolio_value(portfolio):
-    """Calculate total portfolio value"""
-    total = portfolio["cash"]
-    for symbol, holding in portfolio["holdings"].items():
-        stock = next((s for s in stocks if s["symbol"] == symbol), None)
-        if stock:
-            total += holding["shares"] * stock["price"]
-    return round(total, 2)
-
-
-def check_price_targets():
-    """
-    Check all users' holdings against their price targets.
-    If current price >= price_target, notify user (front-end will handle alert)
-    """
-    price_target_alerts = []
-    
-    with user_lock:
-        for username, user in users.items():
-            portfolio = user["portfolio"]
+class TableParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.in_tbody = False
+        self.in_row = False
+        self.in_cell = False
+        self.current_row = []
+        self.current_cell = ""
+        self.rows = []
+        self.cell_count = 0
+        
+    def handle_starttag(self, tag, attrs):
+        if tag == 'tbody':
+            self.in_tbody = True
+        elif self.in_tbody and tag == 'tr':
+            self.in_row = True
+            self.current_row = []
+            self.cell_count = 0
+        elif self.in_row and tag == 'td':
+            self.in_cell = True
+            self.current_cell = ""
             
-            for symbol, holding in portfolio["holdings"].items():
-                price_target = holding.get("price_target")
-                if price_target is None or holding["shares"] <= 0:
-                    continue
+    def handle_endtag(self, tag):
+        if tag == 'tbody':
+            self.in_tbody = False
+        elif self.in_row and tag == 'tr':
+            self.in_row = False
+            if self.current_row:
+                self.rows.append(self.current_row)
+        elif self.in_cell and tag == 'td':
+            self.in_cell = False
+            self.current_row.append(self.current_cell.strip())
+            self.cell_count += 1
+            
+    def handle_data(self, data):
+        if self.in_cell:
+            self.current_cell += data
 
-                stock = next((s for s in stocks if s["symbol"] == symbol), None)
-                if not stock:
-                    continue
-
-                if stock["price"] >= price_target:
-                    price_target_alerts.append({
-                        "username": username,
-                        "symbol": symbol,
-                        "current_price": stock["price"],
-                        "price_target": price_target,
-                        "shares": holding["shares"]
-                    })
+# -----------------------------
+# Real GSE data fetching functions (using only built-in modules)
+# -----------------------------
+def fetch_gse_data_from_afx():
+    """Fetch real GSE data from afx.kwayisi.org using urllib"""
+    try:
+        req = urllib.request.Request(
+            'https://afx.kwayisi.org/gse/',
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        )
+        
+        with urllib.request.urlopen(req, timeout=10) as response:
+            html = response.read().decode('utf-8')
+        
+        # Parse the table using our custom parser
+        parser = TableParser()
+        parser.feed(html)
+        
+        stock_data = []
+        for row in parser.rows:
+            if len(row) >= 4:
+                # Columns: index, symbol, name, price, change, volume
+                symbol = row[1] if len(row) > 1 else ""
+                price_text = row[3] if len(row) > 3 else ""
+                
+                # Clean price text
+                price_text = price_text.replace('?', '').replace(',', '').strip()
+                if price_text and symbol:
+                    try:
+                        price = float(price_text)
+                        stock_data.append({
+                            'symbol': symbol,
+                            'price': price
+                        })
+                    except ValueError:
+                        continue
+        
+        return stock_data
     
-    return price_target_alerts
+    except Exception as e:
+        print(f"Error fetching from AFX: {e}")
+        return None
 
-
-def apply_stop_losses():
-    """
-    Check all users' holdings against their stop-loss levels.
-    If current price <= stop_loss, automatically sell all shares.
-    """
-    now = datetime.now().isoformat()
-    stop_loss_executions = []
-
-    with user_lock:
-        for username, user in users.items():
-            portfolio = user["portfolio"]
-            to_close = []
-
-            for symbol, holding in list(portfolio["holdings"].items()):
-                stop_loss = holding.get("stop_loss")
-                if stop_loss is None or holding["shares"] <= 0:
-                    continue
-
-                stock = next((s for s in stocks if s["symbol"] == symbol), None)
-                if not stock:
-                    continue
-
-                if stock["price"] <= stop_loss:
-                    shares_to_sell = holding["shares"]
-                    total_value = round(shares_to_sell * stock["price"], 2)
-
-                    # Credit cash
-                    portfolio["cash"] = round(portfolio["cash"] + total_value, 2)
-
-                    # Record transaction
-                    portfolio["transactions"].append({
-                        "type": "stop_loss_sell",
-                        "symbol": symbol,
-                        "shares": shares_to_sell,
-                        "price": stock["price"],
-                        "total": total_value,
-                        "timestamp": now,
-                        "username": username,
-                    })
-
-                    # Mark holding to be removed
-                    to_close.append(symbol)
-                    
-                    stop_loss_executions.append({
-                        "username": username,
-                        "symbol": symbol,
-                        "shares": shares_to_sell,
-                        "price": stock["price"],
-                        "total": total_value
-                    })
-
-            for symbol in to_close:
-                portfolio["holdings"].pop(symbol, None)
-
-            portfolio["total_value"] = calculate_portfolio_value(portfolio)
+def fetch_gse_data_from_api():
+    """Fetch real GSE data from devco.gse.com.gh API using urllib"""
+    try:
+        req = urllib.request.Request(
+            'https://devco.gse.com.gh/api/v1/market/summary',
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        )
+        
+        with urllib.request.urlopen(req, timeout=8) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        
+        stock_data = []
+        
+        if isinstance(data, list):
+            for item in data:
+                if 'symbol' in item and 'lastPrice' in item:
+                    try:
+                        stock_data.append({
+                            'symbol': item['symbol'],
+                            'price': float(item['lastPrice'])
+                        })
+                    except (ValueError, TypeError):
+                        continue
+        
+        return stock_data
     
-    return stop_loss_executions
+    except Exception as e:
+        print(f"Error fetching from GSE API: {e}")
+        return None
 
+def update_prices_with_real_data():
+    """Update stock prices with real GSE data"""
+    global stocks
+    
+    # Try primary source first (AFX)
+    real_data = fetch_gse_data_from_afx()
+    
+    # If AFX fails, try backup API
+    if not real_data:
+        real_data = fetch_gse_data_from_api()
+    
+    if real_data:
+        with stock_lock:
+            updated_count = 0
+            # Update prices for matching symbols
+            for stock in stocks:
+                for real_stock in real_data:
+                    if stock['symbol'] == real_stock['symbol']:
+                        old_price = stock['price']
+                        stock['price'] = real_stock['price']
+                        
+                        # Add to history
+                        stock['history'].append({
+                            "time": datetime.now().isoformat(), 
+                            "price": stock['price']
+                        })
+                        if len(stock['history']) > 100:
+                            stock['history'].pop(0)
+                        updated_count += 1
+                        break
+        
+        print(f"Updated {updated_count} stocks with real GSE data")
+        return True
+    else:
+        print("Failed to fetch real GSE data, falling back to simulated data")
+        return False
 
 def update_prices():
     """
     Simulate price changes (±2%) for stocks every 10 seconds,
-    but only when market is open.
+    but when market is open, try to fetch real GSE data first.
     This runs in a background thread.
     """
+    last_real_update = 0
+    real_update_interval = 30  # Update with real data every 30 seconds
+    
     while True:
         time.sleep(10)  # Check every 10 seconds
         
         with stock_lock:
             if market_open:
+                current_time = time.time()
+                
+                # Try to fetch real data at intervals
+                if current_time - last_real_update >= real_update_interval:
+                    real_data_fetched = update_prices_with_real_data()
+                    if real_data_fetched:
+                        last_real_update = current_time
+                        # Still apply stop-loss and price target checks after real update
+                        stop_loss_executions = apply_stop_losses()
+                        price_target_alerts = check_price_targets()
+                        
+                        # Store recent alerts for frontend
+                        if hasattr(app, 'recent_alerts'):
+                            app.recent_alerts['stop_loss'].extend(stop_loss_executions)
+                            app.recent_alerts['price_target'].extend(price_target_alerts)
+                            app.recent_alerts['stop_loss'] = app.recent_alerts['stop_loss'][-50:]
+                            app.recent_alerts['price_target'] = app.recent_alerts['price_target'][-50:]
+                        continue
+                
+                # Fallback to simulated prices if real data wasn't fetched
                 now = datetime.now()
                 for stock in stocks:
                     if stock["price"] > 0:
@@ -198,7 +262,6 @@ def update_prices():
                     # Keep only last 50 alerts
                     app.recent_alerts['stop_loss'] = app.recent_alerts['stop_loss'][-50:]
                     app.recent_alerts['price_target'] = app.recent_alerts['price_target'][-50:]
-
 
 # Start background price update thread
 price_thread = threading.Thread(target=update_prices, daemon=True)
@@ -749,6 +812,120 @@ def calculate_order_value():
         "total_value": round(total_value, 2),
         "action": action
     })
+
+
+# -----------------------------
+# Portfolio helpers (defined after imports but before they're used)
+# -----------------------------
+def init_portfolio():
+    """Initialize user portfolio"""
+    return {
+        "cash": 100000.00,
+        "holdings": {},          # {symbol: {"shares": int, "avg_cost": float, "stop_loss": float|None, "price_target": float|None}}
+        "total_value": 100000.00,
+        "transactions": []       # list of trade dicts
+    }
+
+
+def calculate_portfolio_value(portfolio):
+    """Calculate total portfolio value"""
+    total = portfolio["cash"]
+    for symbol, holding in portfolio["holdings"].items():
+        stock = next((s for s in stocks if s["symbol"] == symbol), None)
+        if stock:
+            total += holding["shares"] * stock["price"]
+    return round(total, 2)
+
+
+def check_price_targets():
+    """
+    Check all users' holdings against their price targets.
+    If current price >= price_target, notify user (front-end will handle alert)
+    """
+    price_target_alerts = []
+    
+    with user_lock:
+        for username, user in users.items():
+            portfolio = user["portfolio"]
+            
+            for symbol, holding in portfolio["holdings"].items():
+                price_target = holding.get("price_target")
+                if price_target is None or holding["shares"] <= 0:
+                    continue
+
+                stock = next((s for s in stocks if s["symbol"] == symbol), None)
+                if not stock:
+                    continue
+
+                if stock["price"] >= price_target:
+                    price_target_alerts.append({
+                        "username": username,
+                        "symbol": symbol,
+                        "current_price": stock["price"],
+                        "price_target": price_target,
+                        "shares": holding["shares"]
+                    })
+    
+    return price_target_alerts
+
+
+def apply_stop_losses():
+    """
+    Check all users' holdings against their stop-loss levels.
+    If current price <= stop_loss, automatically sell all shares.
+    """
+    now = datetime.now().isoformat()
+    stop_loss_executions = []
+
+    with user_lock:
+        for username, user in users.items():
+            portfolio = user["portfolio"]
+            to_close = []
+
+            for symbol, holding in list(portfolio["holdings"].items()):
+                stop_loss = holding.get("stop_loss")
+                if stop_loss is None or holding["shares"] <= 0:
+                    continue
+
+                stock = next((s for s in stocks if s["symbol"] == symbol), None)
+                if not stock:
+                    continue
+
+                if stock["price"] <= stop_loss:
+                    shares_to_sell = holding["shares"]
+                    total_value = round(shares_to_sell * stock["price"], 2)
+
+                    # Credit cash
+                    portfolio["cash"] = round(portfolio["cash"] + total_value, 2)
+
+                    # Record transaction
+                    portfolio["transactions"].append({
+                        "type": "stop_loss_sell",
+                        "symbol": symbol,
+                        "shares": shares_to_sell,
+                        "price": stock["price"],
+                        "total": total_value,
+                        "timestamp": now,
+                        "username": username,
+                    })
+
+                    # Mark holding to be removed
+                    to_close.append(symbol)
+                    
+                    stop_loss_executions.append({
+                        "username": username,
+                        "symbol": symbol,
+                        "shares": shares_to_sell,
+                        "price": stock["price"],
+                        "total": total_value
+                    })
+
+            for symbol in to_close:
+                portfolio["holdings"].pop(symbol, None)
+
+            portfolio["total_value"] = calculate_portfolio_value(portfolio)
+    
+    return stop_loss_executions
 
 
 # -----------------------------
