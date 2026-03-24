@@ -20,8 +20,17 @@ app.secret_key = os.environ.get('SECRET_KEY', 'yin_tradesim_secret_2025_change_m
 def get_db_path():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     data_dir = os.path.join(base_dir, "data")
-    os.makedirs(data_dir, exist_ok=True)
-    return os.path.join(data_dir, "trading_platform.db")
+    try:
+        os.makedirs(data_dir, exist_ok=True)
+        # Test write permission (fails on Vercel/AWS Lambda)
+        test_file = os.path.join(data_dir, '.writable')
+        with open(test_file, 'w') as f:
+            f.write('ok')
+        os.remove(test_file)
+        return os.path.join(data_dir, "trading_platform.db")
+    except (OSError, IOError):
+        # Fallback to /tmp for read-only serverless environments
+        return '/tmp/trading_platform.db'
 
 DB_FILE = get_db_path()
 
