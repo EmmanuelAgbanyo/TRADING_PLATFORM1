@@ -184,6 +184,8 @@ def calculate_portfolio_value(portfolio):
 def check_price_targets():
     alerts = []
     with user_lock:
+        global users
+        users = load_users()
         for username, user in users.items():
             for symbol, holding in user["portfolio"]["holdings"].items():
                 pt = holding.get("price_target")
@@ -204,6 +206,8 @@ def apply_stop_losses():
     execs = []
     changed = False
     with user_lock:
+        global users
+        users = load_users()
         for username, user in users.items():
             portfolio = user["portfolio"]
             to_close  = []
@@ -346,8 +350,11 @@ def get_current_user():
     if "user_id" not in session:
         return None
     username = session.get("username")
-    if username and username in users:
-        return users[username]
+    if username:
+        global users
+        users = load_users()
+        if username in users:
+            return users[username]
     return None
 
 
@@ -787,6 +794,8 @@ def get_public_leaderboard():
 
     board = []
     with user_lock:
+        global users
+        users = load_users()
         for uname, u in users.items():
             pf     = u["portfolio"]
             val    = calculate_portfolio_value(pf)
@@ -815,6 +824,8 @@ def get_admin_leaderboard():
 
     board = []
     with user_lock:
+        global users
+        users = load_users()
         for uname, u in users.items():
             pf     = u["portfolio"]
             val    = pf["total_value"]
@@ -852,6 +863,8 @@ def get_admin_users():
 
     result = []
     with user_lock:
+        global users
+        users = load_users()
         for uname, u in users.items():
             pf     = u["portfolio"]
             val    = pf["total_value"]
@@ -874,6 +887,8 @@ def get_admin_stats():
         return jsonify({"error": "Admin access required"}), 403
 
     with user_lock:
+        global users
+        users = load_users()
         total_users    = len(users)
         total_pv       = sum(u["portfolio"]["total_value"] for u in users.values())
         avg_pv         = total_pv / total_users if total_users else 0
