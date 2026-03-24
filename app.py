@@ -41,7 +41,6 @@ def init_db():
         ''')
 
 def get_setting(key, default=None):
-    init_db()
     with sqlite3.connect(DB_FILE) as conn:
         res = conn.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
         if res:
@@ -49,7 +48,6 @@ def get_setting(key, default=None):
     return default
 
 def set_setting(key, value):
-    init_db()
     with sqlite3.connect(DB_FILE) as conn:
         conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, str(value)))
 
@@ -63,7 +61,6 @@ def sync_market_open():
 
 
 def load_users():
-    init_db()
     loaded_users = {}
     try:
         with sqlite3.connect(DB_FILE) as conn:
@@ -77,7 +74,6 @@ def load_users():
     return {}
 
 def save_users():
-    init_db()
     try:
         with sqlite3.connect(DB_FILE) as conn:
             conn.execute("DELETE FROM users")
@@ -89,6 +85,7 @@ def save_users():
         print(f"[ERROR] Could not save users to database: {e}")
         return False
 
+init_db()
 users = load_users()
 admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
 
