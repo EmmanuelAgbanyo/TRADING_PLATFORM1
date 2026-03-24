@@ -8,40 +8,57 @@ import time
 import json
 import urllib.request
 import os
+import sqlite3
 from html.parser import HTMLParser
 
 app = Flask(__name__, instance_relative_config=True)
 app.secret_key = os.environ.get('SECRET_KEY', 'yin_tradesim_secret_2025_change_me')
 
 # ─────────────────────────────────────────────
-# Persistent user storage
-# Uses /tmp on Render (always writable) with a fallback to instance folder
+# Persistent user storage (SQLite Database)
 # ─────────────────────────────────────────────
-def _get_users_path():
-    # /tmp is always writable on every platform including Render
-    tmp_path = '/tmp/yin_users_data.json'
-    return tmp_path
+def get_db_path():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(base_dir, "data")
+    os.makedirs(data_dir, exist_ok=True)
+    return os.path.join(data_dir, "trading_platform.db")
 
-USERS_FILE = _get_users_path()
+DB_FILE = get_db_path()
+
+def init_db():
+    with sqlite3.connect(DB_FILE) as conn:
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                username TEXT PRIMARY KEY,
+                data TEXT
+            )
+        ''')
 
 def load_users():
-    if os.path.exists(USERS_FILE):
-        try:
-            with open(USERS_FILE, 'r') as f:
-                data = json.load(f)
-                print(f"[INFO] Loaded {len(data)} users from {USERS_FILE}")
-                return data
-        except Exception as e:
-            print(f"[WARN] Could not load users file: {e}")
+    init_db()
+    loaded_users = {}
+    try:
+        with sqlite3.connect(DB_FILE) as conn:
+            cursor = conn.execute("SELECT username, data FROM users")
+            for row in cursor:
+                loaded_users[row[0]] = json.loads(row[1])
+        print(f"[INFO] Loaded {len(loaded_users)} users from SQLite DB {DB_FILE}")
+        return loaded_users
+    except Exception as e:
+        print(f"[WARN] Could not load users from database: {e}")
     return {}
 
 def save_users():
+    init_db()
     try:
-        with open(USERS_FILE, 'w') as f:
-            json.dump(users, f, indent=2)
+        with sqlite3.connect(DB_FILE) as conn:
+            conn.execute("DELETE FROM users")
+            for username, data_dict in users.items():
+                conn.execute("INSERT INTO users (username, data) VALUES (?, ?)", 
+                             (username, json.dumps(data_dict)))
         return True
     except Exception as e:
-        print(f"[ERROR] Could not save users: {e}")
+        print(f"[ERROR] Could not save users to database: {e}")
         return False
 
 users = load_users()
