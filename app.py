@@ -33,6 +33,34 @@ def init_db():
                 data TEXT
             )
         ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )
+        ''')
+
+def get_setting(key, default=None):
+    init_db()
+    with sqlite3.connect(DB_FILE) as conn:
+        res = conn.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
+        if res:
+            return res[0]
+    return default
+
+def set_setting(key, value):
+    init_db()
+    with sqlite3.connect(DB_FILE) as conn:
+        conn.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, str(value)))
+
+def sync_market_open():
+    global market_open
+    val = get_setting('market_open')
+    if val is not None:
+        market_open = (val == 'true')
+    return market_open
+
+
 
 def load_users():
     init_db()
@@ -274,7 +302,7 @@ def update_prices():
     real_interval = 30
     while True:
         time.sleep(10)
-        if market_open:
+        if sync_market_open():
             now = time.time()
             if now - last_real >= real_interval:
                 if update_prices_with_real_data():
@@ -345,6 +373,10 @@ def login():
 
         if not username or not password:
             return render_template("login.html", error="Please enter both username and password")
+
+        # Sync users for multi-worker deployments
+        global users
+        users = load_users()
 
         user = users.get(username)
         if not user:
@@ -474,7 +506,7 @@ def get_stocks():
     with stock_lock:
         data = [s.copy() for s in stocks]
     for s in data:
-        s['market_open'] = market_open
+        s['market_open'] = sync_market_open()
     return jsonify(data)
 
 
@@ -485,7 +517,7 @@ def get_portfolio():
         return jsonify({"error": "Not authenticated"}), 401
     portfolio = user["portfolio"]
     portfolio["total_value"] = calculate_portfolio_value(portfolio)
-    portfolio["market_open"] = market_open
+    portfolio["market_open"] = sync_market_open()
     return jsonify(portfolio)
 
 
@@ -529,7 +561,7 @@ def buy_stock():
     if not user:
         return jsonify({"error": "Not authenticated"}), 401
 
-    if not market_open:
+    if not sync_market_open():
         return jsonify({"error": "Market is currently closed. Trading is not allowed."}), 400
 
     data   = request.json or {}
@@ -628,7 +660,7 @@ def sell_stock():
     if not user:
         return jsonify({"error": "Not authenticated"}), 401
 
-    if not market_open:
+    if not sync_market_open():
         return jsonify({"error": "Market is currently closed. Trading is not allowed."}), 400
 
     data   = request.json or {}
@@ -853,7 +885,7 @@ def get_admin_stats():
         "average_portfolio_value": round(avg_pv, 2),
         "active_traders":          active_traders,
         "total_trades":            total_trades,
-        "market_open":             market_open,
+        "market_open":             sync_market_open(),
         "market_stats": {
             "total_market_cap": round(mcap, 2),
             "biggest_gainer":   {"symbol": gainer["symbol"], "price": gainer["price"]},
@@ -981,9 +1013,11 @@ def market_control():
     action = (request.json or {}).get("action", "")
     if action == "open":
         market_open = True
+        set_setting('market_open', 'true')
         return jsonify({"success": True, "message": "Market opened", "market_open": True})
     elif action == "close":
         market_open = False
+        set_setting('market_open', 'false')
         return jsonify({"success": True, "message": "Market closed", "market_open": False})
     return jsonify({"error": "Use 'open' or 'close'"}), 400
 
