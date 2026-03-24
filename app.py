@@ -27,6 +27,7 @@ DB_FILE = get_db_path()
 
 def init_db():
     with sqlite3.connect(DB_FILE) as conn:
+        conn.execute("PRAGMA journal_mode=WAL")
         conn.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 username TEXT PRIMARY KEY,
@@ -76,9 +77,8 @@ def load_users():
 def save_users():
     try:
         with sqlite3.connect(DB_FILE) as conn:
-            conn.execute("DELETE FROM users")
             for username, data_dict in users.items():
-                conn.execute("INSERT INTO users (username, data) VALUES (?, ?)", 
+                conn.execute("INSERT OR REPLACE INTO users (username, data) VALUES (?, ?)", 
                              (username, json.dumps(data_dict)))
         return True
     except Exception as e:
@@ -897,6 +897,8 @@ def reset_competition():
         return jsonify({"error": "Admin access required"}), 403
     with user_lock:
         users.clear()
+        with sqlite3.connect(DB_FILE) as conn:
+            conn.execute("DELETE FROM users")
         save_users()
     return jsonify({"success": True, "message": "Competition reset. All users cleared."})
 
@@ -912,6 +914,8 @@ def delete_user():
         if username not in users:
             return jsonify({"error": f"User '{username}' not found"}), 404
         del users[username]
+        with sqlite3.connect(DB_FILE) as conn:
+            conn.execute("DELETE FROM users WHERE username = ?", (username,))
         save_users()
     return jsonify({"success": True, "message": f"User '{username}' deleted."})
 
