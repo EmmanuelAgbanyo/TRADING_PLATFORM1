@@ -168,7 +168,8 @@ def init_portfolio():
         "cash": 1000000.00,
         "holdings": {},
         "total_value": 1000000.00,
-        "transactions": []
+        "transactions": [],
+        "history": []
     }
 
 
@@ -205,20 +206,38 @@ def apply_stop_losses():
     now   = datetime.now().isoformat()
     execs = []
     changed = False
+    dividend_stocks = {"MTNGH": 0.05, "GGBL": 0.10, "SCB": 0.15}
     with user_lock:
         global users
         users = load_users()
         for username, user in users.items():
             portfolio = user["portfolio"]
+            if "history" not in portfolio: portfolio["history"] = []
+            
+            # Snap Portfolio 
+            val = calculate_portfolio_value(portfolio)
+            portfolio["history"].append({"time": now, "value": val})
+            if len(portfolio["history"]) > 60: portfolio["history"].pop(0)
+
             to_close  = []
             for symbol, holding in list(portfolio["holdings"].items()):
-                sl = holding.get("stop_loss")
-                if sl is None or holding["shares"] <= 0:
-                    continue
                 stock = next((s for s in stocks if s["symbol"] == symbol), None)
-                if not stock:
-                    continue
-                if stock["price"] <= sl:
+                if not stock: continue
+                
+                # Trailing Stop Engine
+                tsl = holding.get("trailing_stop")
+                if tsl and holding["shares"] > 0:
+                    highest = holding.get("highest_seen", holding.get("avg_cost", stock["price"]))
+                    if stock["price"] > highest:
+                        holding["highest_seen"] = stock["price"]
+                        holding["stop_loss"] = round(stock["price"] * (1 - (tsl / 100)), 2)
+                        changed = True
+                    elif stock["price"] < highest:
+                        holding.setdefault("highest_seen", highest)
+                
+                # Liquidate if Stop hit
+                sl = holding.get("stop_loss")
+                if sl is not None and holding["shares"] > 0 and stock["price"] <= sl:
                     qty   = holding["shares"]
                     total = round(qty * stock["price"], 2)
                     portfolio["cash"] = round(portfolio["cash"] + total, 2)
@@ -233,11 +252,28 @@ def apply_stop_losses():
                         "shares": qty, "price": stock["price"], "total": total
                     })
                     changed = True
+
+                # Yield Simulator
+                if symbol in dividend_stocks and random.random() < 0.05:
+                    payout = round(holding["shares"] * dividend_stocks[symbol], 2)
+                    if payout > 0:
+                        portfolio["cash"] = round(portfolio["cash"] + payout, 2)
+                        portfolio["transactions"].append({
+                            "type": "dividend", "symbol": symbol, "shares": 0, "price": 0,
+                            "total": payout, "timestamp": now, "username": username
+                        })
+                        app.recent_alerts['price_target'].append({
+                            "username": username, "symbol": symbol, "type": "Dividend",
+                            "message": f"Paid GHS {payout} yield!"
+                        })
+                        changed = True
+
             for sym in to_close:
                 portfolio["holdings"].pop(sym, None)
             portfolio["total_value"] = calculate_portfolio_value(portfolio)
-    if changed:
-        save_users()
+            if changed:
+                save_users()
+                changed = False
     return execs
 
 # ─────────────────────────────────────────────
@@ -346,6 +382,20 @@ def update_prices():
 # ─────────────────────────────────────────────
 # Auth helpers
 # ─────────────────────────────────────────────
+SIMULATED_NEWS = [
+    "GSE Composite Index hits new monthly high on heavy bank trading.",
+    "MTN Ghana announces major 5G infrastructure expansion nationwide.",
+    "Benso Palm Plantation declares robust quarterly earnings and steady yields.",
+    "Tullow Oil discovering promising new offshore reserves.",
+    "Ecobank Ghana secures large multinational pan-African partnership.",
+    "SIC Insurance premium volumes surge in Q3 reporting.",
+    "Overall market sentiment remains heavily bullish among retail.",
+    "Central Bank maintains policy rate, stabilizing financial sectors."
+]
+@app.route("/api/news")
+def get_news():
+    return jsonify(random.sample(SIMULATED_NEWS, 3))
+
 def get_current_user():
     if "user_id" not in session:
         return None
@@ -745,11 +795,17 @@ def update_order_settings():
         holding = portfolio["holdings"][symbol]
         sl = data.get("stop_loss")
         pt = data.get("price_target")
+        tsl = data.get("trailing_stop")
 
         if sl is not None:
             try:    holding["stop_loss"]    = float(sl)
             except: return jsonify({"error": "Invalid stop-loss"}), 400
         if pt is not None:
+            try:    holding["price_target"] = float(pt)
+            except: return jsonify({"error": "Invalid price target"}), 400
+        if tsl is not None:
+            try:    holding["trailing_stop"] = float(tsl)
+            except: return jsonify({"error": "Invalid trailing stop"}), 400
             try:    holding["price_target"] = float(pt)
             except: return jsonify({"error": "Invalid price target"}), 400
 
