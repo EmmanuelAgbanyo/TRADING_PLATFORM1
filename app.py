@@ -746,7 +746,6 @@ def sell_stock():
 
     with user_lock:
         portfolio = user["portfolio"]
-        print(f"Before sell: {portfolio}")
         if symbol not in portfolio["holdings"]:
             return jsonify({"error": f"You don't own any shares of {symbol}"}), 400
 
@@ -774,7 +773,6 @@ def sell_stock():
             "username":  user["username"],
         })
         portfolio["total_value"] = calculate_portfolio_value(portfolio)
-        print(f"After sell: {portfolio}")
         save_users()
 
     return jsonify({"success": True, "portfolio": portfolio, "order_value": total_value})
