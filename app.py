@@ -681,7 +681,6 @@ def buy_stock():
 
     with user_lock:
         portfolio = user["portfolio"]
-        print(f"Before buy: {portfolio}")
         if total_cost > portfolio["cash"]:
             return jsonify({
                 "error": f"Insufficient funds. Need GHS {total_cost:,.2f} but you have GHS {portfolio['cash']:,.2f}"
@@ -715,7 +714,6 @@ def buy_stock():
             "price_target": price_target,
         })
         portfolio["total_value"] = calculate_portfolio_value(portfolio)
-        print(f"After buy: {portfolio}")
         save_users()
 
     return jsonify({"success": True, "portfolio": portfolio, "order_value": round(total_cost, 2)})
